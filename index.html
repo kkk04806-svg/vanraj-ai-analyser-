@@ -1,81 +1,79 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI ANALYSER - PREMIUM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>WinGo History Analysis</title>
     <style>
-        .glow-red { box-shadow: 0 0 20px #ef4444; border: 2px solid #ef4444; }
-        .glow-green { box-shadow: 0 0 20px #22c55e; border: 2px solid #22c55e; }
-        .glow-yellow { box-shadow: 0 0 20px #eab308; border: 2px solid #eab308; }
-        body { background: radial-gradient(circle, #1a1a1a 0%, #000000 100%); }
+        body { font-family: sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .green { color: green; font-weight: bold; }
+        .red { color: red; font-weight: bold; }
     </style>
 </head>
-<body class="text-white font-sans min-h-screen">
-
-    <div class="p-6 bg-gray-900/80 backdrop-blur-md text-center border-b border-yellow-600">
-        <h1 class="text-2xl font-black text-yellow-500 italic tracking-tighter uppercase">VANRAJ AI PREMIUM</h1>
-        <div class="flex justify-center items-center gap-2 mt-1">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-            <p class="text-[10px] text-green-400 font-bold uppercase tracking-widest">System: 99.9% Accurate</p>
-        </div>
-    </div>
-
-    <div class="m-5 grid grid-cols-2 gap-4">
-        <div class="bg-gray-900/50 p-6 rounded-3xl border border-gray-800 text-center">
-            <p class="text-[10px] text-gray-500 mb-2 font-bold uppercase">Color AI</p>
-            <div id="color-box" class="text-3xl font-black py-5 bg-black rounded-2xl border border-gray-700 transition-all duration-500">---</div>
-        </div>
-        <div class="bg-gray-900/50 p-6 rounded-3xl border border-gray-800 text-center">
-            <p class="text-[10px] text-gray-500 mb-2 font-bold uppercase">Size AI</p>
-            <div id="size-box" class="text-3xl font-black py-5 bg-black rounded-2xl border border-gray-700 text-yellow-500 transition-all duration-500">---</div>
-        </div>
-    </div>
-
-    <div class="mx-5 p-8 bg-gray-900 rounded-3xl border border-yellow-900/30 text-center shadow-2xl">
-        <p class="text-xs text-yellow-500 mb-4 font-bold uppercase tracking-widest">Enter Last Result Number:</p>
-        <div class="flex flex-col gap-4">
-            <input type="number" id="input-num" placeholder="0-9" min="0" max="9" class="w-full p-5 bg-black border-2 border-gray-700 rounded-2xl text-center text-5xl font-black text-white focus:border-yellow-500 outline-none transition-all">
-            <button onclick="calculateAI()" class="w-full py-5 bg-gradient-to-r from-yellow-700 to-yellow-500 text-black font-black rounded-2xl text-lg active:scale-95 transition-transform shadow-[0_0_20px_rgba(234,179,8,0.3)]">GET SURE SHOT RESULT</button>
-        </div>
-    </div>
-
-    <div class="m-5 p-4 bg-black/40 rounded-2xl border border-gray-800 text-center">
-        <p class="text-[10px] text-gray-500 italic">Note: Ye logic "Inverse Probability" par based hai jo 10 me se 9 baar sahi result deta hai.</p>
-    </div>
-
-    <script>
-        function calculateAI() {
-            const inputField = document.getElementById('input-num');
-            const num = parseInt(inputField.value);
-            const colorBox = document.getElementById('color-box');
-            const sizeBox = document.getElementById('size-box');
-
-            if (isNaN(num) || num < 0 || num > 9) {
-                alert("Bhai, 0 se 9 ke beech ka number dalo!");
-                return;
-            }
-
-            // --- SURE SHOT LOGIC ---
-            // Color Prediction: Based on number parity trend
-            const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
-            
-            // Size Prediction: Small (0-4) vs Big (5-9) inverse balance
-            const nextSize = (num <= 4) ? "BIG" : "SMALL";
-
-            // Update UI with Effects
-            colorBox.innerText = nextColor;
-            colorBox.style.color = (nextColor === "RED") ? "#ef4444" : "#22c55e";
-            colorBox.className = `text-3xl font-black py-5 bg-black rounded-2xl transition-all duration-500 ${nextColor === 'RED' ? 'glow-red' : 'glow-green'}`;
-
-            sizeBox.innerText = nextSize;
-            sizeBox.className = `text-3xl font-black py-5 bg-black rounded-2xl transition-all duration-500 glow-yellow text-yellow-500 border-2 border-yellow-600`;
-
-            // Reset for next round
-            inputField.value = "";
-            inputField.focus();
-        }
-    </script>
+<body>
+    <h2>WinGo Recent History</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Issue Number</th>
+                <th>Number</th>
+                <th>Color</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>20260505100051344</td>
+                <td>1</td>
+                <td class="green">green</td>
+            </tr>
+            <tr>
+                <td>20260505100051343</td>
+                <td>8</td>
+                <td class="red">red</td>
+            </tr>
+            <tr>
+                <td>20260505100051342</td>
+                <td>2</td>
+                <td class="red">red</td>
+            </tr>
+            <tr>
+                <td>20260505100051341</td>
+                <td>5</td>
+                <td class="green">green,violet</td>
+            </tr>
+            <tr>
+                <td>20260505100051340</td>
+                <td>8</td>
+                <td class="red">red</td>
+            </tr>
+            <tr>
+                <td>20260505100051339</td>
+                <td>5</td>
+                <td class="green">green,violet</td>
+            </tr>
+            <tr>
+                <td>20260505100051338</td>
+                <td>4</td>
+                <td class="red">red</td>
+            </tr>
+            <tr>
+                <td>20260505100051337</td>
+                <td>4</td>
+                <td class="red">red</td>
+            </tr>
+            <tr>
+                <td>20260505100051336</td>
+                <td>0</td>
+                <td class="red">red,violet</td>
+            </tr>
+            <tr>
+                <td>20260505100051335</td>
+                <td>3</td>
+                <td class="green">green</td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 </html>
