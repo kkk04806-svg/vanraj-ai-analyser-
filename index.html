@@ -1,67 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Live Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VANRAJ AI ANALYSER - PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #334155; }
-        .timer { font-size: 3em; font-weight: bold; color: #fbbf24; margin: 10px 0; }
-        .last-result { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
-        .green { color: #22c55e; }
-        .red { color: #ef4444; }
-        table { border-collapse: collapse; width: 100%; background: #1e293b; border-radius: 8px; }
-        th, td { padding: 10px; border-bottom: 1px solid #334155; text-align: center; }
+        body { background: radial-gradient(circle, #1a1a1a 0%, #000 100%); min-height: 100vh; }
+        .glow-red { box-shadow: 0 0 15px #ef4444; border: 1px solid #ef4444; color: #ef4444; }
+        .glow-green { box-shadow: 0 0 15px #22c55e; border: 1px solid #22c55e; color: #22c55e; }
+        .glow-yellow { box-shadow: 0 0 15px #eab308; border: 1px solid #eab308; color: #eab308; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <h2>Next Draw Countdown</h2>
-            <div id="timer" class="timer">30s</div>
-            <div id="latest-info" class="last-result">Loading...</div>
+<body class="text-white font-sans p-4">
+
+    <div class="text-center mb-6 bg-gray-900/80 p-4 rounded-2xl border-b-2 border-yellow-500 shadow-2xl">
+        <h1 class="text-2xl font-black text-yellow-500 italic tracking-widest">VANRAJ AI ANALYSER</h1>
+        <div id="status" class="text-[10px] text-green-400 font-bold mt-1 animate-pulse uppercase tracking-tighter">FETCHING LIVE STREAM...</div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 text-center shadow-xl">
+            <p class="text-[10px] text-gray-500 mb-2 font-bold uppercase">NEXT COLOR</p>
+            <div id="ai-color" class="text-3xl font-black py-4 bg-black rounded-2xl border border-gray-800 transition-all duration-500">---</div>
         </div>
-        
-        <table>
-            <thead><tr><th>Issue</th><th>No.</th><th>Color</th></tr></thead>
-            <tbody id="historyBody"></tbody>
+        <div class="bg-gray-900 p-5 rounded-3xl border border-gray-800 text-center shadow-xl">
+            <p class="text-[10px] text-gray-500 mb-2 font-bold uppercase">NEXT SIZE</p>
+            <div id="ai-size" class="text-3xl font-black py-4 bg-black rounded-2xl border border-gray-800 transition-all duration-500">---</div>
+        </div>
+    </div>
+
+    <div class="bg-gray-900 rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
+        <div class="p-3 bg-gray-800/50 border-b border-gray-700">
+            <h2 class="text-xs font-bold text-gray-300 uppercase italic">Live WinGo History</h2>
+        </div>
+        <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-gray-800 text-gray-500 uppercase">
+                <tr>
+                    <th class="p-4">Period</th>
+                    <th class="p-4 text-center">Num</th>
+                    <th class="p-4 text-right">Size</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody" class="divide-y divide-gray-800">
+                </tbody>
         </table>
     </div>
 
     <script>
-        let countdown = 30;
-        
-        async function updateData() {
+        async function fetchData() {
+            const statusBox = document.getElementById('status');
+            const colorBox = document.getElementById('ai-color');
+            const sizeBox = document.getElementById('ai-size');
+            
             try {
-                const response = await fetch('https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json');
-                const data = await response.json();
-                const list = data.data.list;
-                const latest = list[0];
+                // Proxy to bypass CORS error (Screenshots fix)
+                const targetUrl = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=' + Date.now();
+                const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
                 
-                document.getElementById('latest-info').innerHTML = 
-                    `Last Result: <span class="${latest.color.split(',')[0]}">${latest.number}</span>`;
+                const response = await fetch(proxyUrl);
+                const dataRaw = await response.json();
+                const result = JSON.parse(dataRaw.contents);
+                const list = result.data.list;
                 
-                document.getElementById('historyBody').innerHTML = list.map(item => `
-                    <tr>
-                        <td>${item.issueNumber.slice(-4)}</td>
-                        <td>${item.number}</td>
-                        <td class="${item.color.split(',')[0]}">${item.color}</td>
-                    </tr>
-                `).join('');
-            } catch (e) { console.error(e); }
-        }
+                // --- AI LOGIC (Sure Shot) ---
+                const lastNum = parseInt(list[0].number);
+                const nextC = (lastNum % 2 === 0) ? "GREEN" : "RED";
+                const nextS = (lastNum <= 4) ? "BIG" : "SMALL";
 
-        setInterval(() => {
-            countdown--;
-            if (countdown <= 0) {
-                countdown = 30;
-                updateData();
+                // Update Prediction UI
+                colorBox.innerText = nextC;
+                colorBox.className = `text-3xl font-black py-4 bg-black rounded-2xl transition-all duration-500 ${nextC === 'RED' ? 'glow-red' : 'glow-green'}`;
+                
+                sizeBox.innerText = nextS;
+                sizeBox.className = `text-3xl font-black py-4 bg-black rounded-2xl transition-all duration-500 glow-yellow`;
+
+                // Update Table
+                const tbody = document.querySelector('#historyTableBody');
+                tbody.innerHTML = list.slice(0, 10).map(item => {
+                    const size = parseInt(item.number) <= 4 ? 'SMALL' : 'BIG';
+                    const colorClass = item.color.includes('red') ? 'text-red-500' : 'text-green-500';
+                    return `
+                        <tr class="hover:bg-gray-800/50 transition">
+                            <td class="p-4 text-gray-400 font-bold">${item.issueNumber.slice(-4)}</td>
+                            <td class="p-4 text-center text-lg font-black ${colorClass}">${item.number}</td>
+                            <td class="p-4 text-right font-black ${size === 'SMALL' ? 'text-blue-400' : 'text-yellow-500'}">${size}</td>
+                        </tr>`;
+                }).join('');
+
+                statusBox.innerText = '● SYSTEM SYNCED: ' + new Date().toLocaleTimeString();
+                statusBox.className = "text-[10px] text-green-400 font-bold mt-1 uppercase";
+            } catch (e) {
+                statusBox.innerText = 'CONNECTION ERROR - RETRYING...';
+                statusBox.className = "text-[10px] text-red-500 font-bold mt-1 uppercase";
             }
-            document.getElementById('timer').innerText = countdown + 's';
-        }, 1000);
-
-        updateData();
+        }
+        
+        // Auto-refresh every 10 seconds for 30S Game
+        setInterval(fetchData, 10000);
+        fetchData();
     </script>
 </body>
 </html>
