@@ -8,26 +8,26 @@
 </head>
 <body class="bg-black text-white font-sans">
     <div class="p-4 bg-gray-900 text-center border-b border-yellow-500 shadow-lg">
-        <h1 class="text-xl font-bold text-yellow-500 uppercase tracking-widest">VANRAJ AI ANALYSER</h1>
+        <h1 class="text-xl font-bold text-yellow-500 uppercase tracking-widest text-shadow">VANRAJ AI ANALYSER</h1>
     </div>
 
     <div class="m-4 p-6 bg-gray-900 rounded-2xl border border-gray-800 text-center shadow-2xl">
-        <p id="status-text" class="text-gray-500 text-xs mb-2 italic">INITIALIZING AI SYSTEM...</p>
-        <div id="prediction-box" class="text-4xl font-black py-6 rounded-xl bg-gray-800 shadow-inner tracking-tighter">
-            ANALYZING...
+        <p id="status-text" class="text-gray-500 text-xs mb-2 italic uppercase tracking-tighter">CONNECTING TO SECURE SERVER...</p>
+        <div id="prediction-box" class="text-5xl font-black py-8 rounded-xl bg-gray-800 shadow-inner tracking-tighter animate-pulse">
+            WAIT...
         </div>
-        <button onclick="fetchGameData()" class="mt-6 px-8 py-3 bg-yellow-600 text-white font-bold rounded-full active:scale-90 transition-all duration-200 uppercase text-xs tracking-widest shadow-lg">
-            REFRESH SERVER
+        <button onclick="fetchGameData()" class="mt-6 w-full py-4 bg-yellow-600 text-white font-black rounded-xl active:scale-95 transition-all duration-200 uppercase text-sm tracking-widest shadow-lg border-b-4 border-yellow-800">
+            FORCE REFRESH
         </button>
     </div>
 
     <div class="mx-4 mb-20">
         <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden shadow-xl">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-gray-800 text-gray-400 uppercase">
-                    <tr><th class="p-4">PERIOD</th><th class="p-4 text-center">NUM</th><th class="p-4 text-right">SIZE</th></tr>
+            <table class="w-full text-left text-[10px]">
+                <thead class="bg-gray-800 text-gray-400 uppercase font-bold">
+                    <tr><th class="p-4">PERIOD</th><th class="p-4 text-center">NUMBER</th><th class="p-4 text-right">SIZE</th></tr>
                 </thead>
-                <tbody id="history-body"></tbody>
+                <tbody id="history-body" class="divide-y divide-gray-800"></tbody>
             </table>
         </div>
     </div>
@@ -36,39 +36,54 @@
         async function fetchGameData() {
             const status = document.getElementById('status-text');
             const pBox = document.getElementById('prediction-box');
-            status.innerText = "FETCHING REAL-TIME DATA...";
+            status.innerText = "BYPASSING SECURITY...";
             
-            try {
-                // Using a different proxy to bypass security
-                const targetUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_30S.json?ts=" + Date.now();
-                const proxyUrl = "https://api.codetabs.com/v1/proxy?url=" + encodeURIComponent(targetUrl);
-                
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                const list = data.data.list;
-                
-                // Vanraj AI Logic
-                const lastResult = list[0];
-                const nextPrediction = lastResult.number <= 4 ? "BIG" : "SMALL";
-                const nextColor = lastResult.color.includes('red') ? "GREEN" : "RED";
-                
-                pBox.innerText = nextColor;
-                pBox.style.color = nextColor === 'RED' ? '#ff4d4d' : '#4ade80';
-                status.innerText = "● SYSTEM ACTIVE - SYNCED";
+            // Try different proxies
+            const target = "https://draw.ar-lottery01.com/WinGo/WinGo_30S.json?ts=" + Date.now();
+            const proxies = [
+                "https://api.allorigins.win/get?url=",
+                "https://corsproxy.io/?",
+                "https://thingproxy.freeboard.io/fetch/"
+            ];
 
-                document.getElementById('history-body').innerHTML = list.slice(0, 10).map(g => `
-                    <tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
-                        <td class="p-4 font-mono text-gray-300 font-medium">${g.issueNumber.slice(-4)}</td>
-                        <td class="p-4 text-center font-bold" style="color:${g.color.includes('red') ? '#ff4d4d' : '#4ade80'}">${g.number}</td>
-                        <td class="p-4 text-right font-bold text-gray-500">${parseInt(g.number) <= 4 ? "SMALL" : "BIG"}</td>
-                    </tr>`).join('');
-            } catch (e) { 
-                status.innerText = "PROXY ERROR! REFRESHING...";
-                console.error(e);
+            for (let proxy of proxies) {
+                try {
+                    let url = proxy.includes('allorigins') ? proxy + encodeURIComponent(target) : proxy + target;
+                    const res = await fetch(url);
+                    let data;
+                    
+                    if (proxy.includes('allorigins')) {
+                        const json = await res.json();
+                        data = JSON.parse(json.contents);
+                    } else {
+                        data = await res.json();
+                    }
+
+                    const list = data.data.list;
+                    const last = list[0];
+                    
+                    // AI Calculation Logic
+                    const nextColor = last.color.includes('red') ? "GREEN" : "RED";
+                    pBox.innerText = nextColor;
+                    pBox.classList.remove('animate-pulse');
+                    pBox.style.color = nextColor === 'RED' ? '#ff4d4d' : '#4ade80';
+                    status.innerText = "● SYSTEM CONNECTED - REAL TIME";
+
+                    document.getElementById('history-body').innerHTML = list.slice(0, 10).map(g => `
+                        <tr>
+                            <td class="p-4 font-mono text-gray-400">${g.issueNumber.slice(-3)}</td>
+                            <td class="p-4 text-center font-black text-lg" style="color:${g.color.includes('red') ? '#ff4d4d' : '#4ade80'}">${g.number}</td>
+                            <td class="p-4 text-right font-bold ${parseInt(g.number) <= 4 ? 'text-blue-400' : 'text-yellow-400'}">${parseInt(g.number) <= 4 ? "SMALL" : "BIG"}</td>
+                        </tr>`).join('');
+                    return; // Stop if successful
+                } catch (err) {
+                    console.log("Proxy failed, trying next...");
+                }
             }
+            status.innerText = "ALL SERVERS BUSY. CLICK REFRESH!";
         }
-        // Auto update every 15 seconds
-        setInterval(fetchGameData, 15000); 
+
+        setInterval(fetchGameData, 12000); 
         fetchGameData();
     </script>
 </body>
