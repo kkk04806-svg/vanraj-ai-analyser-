@@ -1,119 +1,81 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI PRO - FIX</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>WinGo Real-Time Tracker</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; }
-        .main-card { background: linear-gradient(180deg, #111 0%, #050505 100%); border: 1px solid #222; }
-        .text-glow-green { text-shadow: 0 0 10px #22c55e; color: #22c55e; }
-        .text-glow-red { text-shadow: 0 0 10px #ef4444; color: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #fff; padding: 15px; }
+        .container { max-width: 500px; margin: auto; }
+        /* मुख्य रिजल्ट कार्ड */
+        .result-card { background: #1e293b; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid #22c55e; margin-bottom: 20px; }
+        .latest-period { font-size: 0.9em; color: #94a3b8; }
+        .latest-value { font-size: 3em; font-weight: bold; margin: 10px 0; color: #fbbf24; }
+        .timer-box { font-size: 1.5em; color: #ef4444; font-weight: bold; }
+        /* टेबल स्टाइल */
+        table { width: 100%; border-collapse: collapse; background: #1e293b; color: #fff; margin-top: 10px; }
+        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
+        th { background: #334155; }
+        .green { color: #22c55e; font-weight: bold; }
+        .red { color: #ef4444; font-weight: bold; }
     </style>
 </head>
-<body class="p-4">
-
-    <div class="text-center mb-6">
-        <h1 class="text-3xl font-black italic text-yellow-500">VANRAJ AI PRO</h1>
-        <p id="status-bar" class="text-[9px] text-yellow-600 font-bold tracking-[0.2em]">INITIALIZING SECURE TUNNEL...</p>
-    </div>
-
-    <div class="main-card rounded-[2.5rem] p-8 mb-6 border-t-4 border-yellow-600 shadow-2xl">
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
-                <p class="text-[10px] text-gray-500 uppercase mb-2">Color AI</p>
-                <div id="res-color" class="text-4xl font-black italic">---</div>
-            </div>
-            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
-                <p class="text-[10px] text-gray-500 uppercase mb-2">Size AI</p>
-                <div id="res-size" class="text-4xl font-black text-yellow-500 italic">---</div>
-            </div>
+<body>
+    <div class="container">
+        <!-- सबसे पहले रिजल्ट -->
+        <div class="result-card">
+            <div class="latest-period" id="period-text">Loading Period...</div>
+            <div class="latest-value" id="result-text">--</div>
+            <div class="timer-box">Next Draw: <span id="timer">30</span>s</div>
         </div>
-        <div class="text-center">
-            <p class="text-[10px] text-gray-500 uppercase mb-1">Target Period</p>
-            <p id="res-period" class="text-xl font-mono font-black text-white italic">SCANNING...</p>
-        </div>
-    </div>
-
-    <button onclick="forceRefresh()" class="w-full py-5 bg-yellow-600 text-black font-black rounded-2xl mb-8 shadow-xl active:scale-95 transition-all text-sm uppercase">Manual Force Sync</button>
-
-    <div class="bg-gray-900/40 rounded-3xl border border-gray-800 overflow-hidden">
-        <table class="w-full text-[11px] font-mono">
-            <thead class="text-gray-500 uppercase bg-black/40">
-                <tr><th class="p-4 text-left">Period</th><th class="p-4 text-center">Num</th><th class="p-4 text-right">Size</th></tr>
-            </thead>
-            <tbody id="gameHistory" class="divide-y divide-gray-800/50"></tbody>
+        
+        <!-- रियल-टाइम हिस्ट्री -->
+        <table>
+            <thead><tr><th>Period</th><th>No.</th><th>Color</th></tr></thead>
+            <tbody id="historyBody"></tbody>
         </table>
     </div>
 
     <script>
-        const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-        // Multiple Proxies to prevent "Waiting" error
-        const PROXIES = [
-            "https://api.allorigins.win/get?url=",
-            "https://thingproxy.freeboard.io/fetch/",
-            "https://corsproxy.io/?"
-        ];
-        let currentProxyIndex = 0;
-
-        async function fetchGameData() {
-            const status = document.getElementById('status-bar');
+        let countdown = 30;
+        
+        async function fetchWinGoData() {
             try {
-                const finalUrl = PROXIES[currentProxyIndex] + encodeURIComponent(API_URL + "?ts=" + Date.now());
-                const response = await fetch(finalUrl);
-                
-                let rawData;
-                if (currentProxyIndex === 0) {
-                    const json = await response.json();
-                    rawData = JSON.parse(json.contents);
-                } else {
-                    rawData = await response.json();
-                }
+                const response = await fetch('https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json');
+                const json = await response.json();
+                const list = json.data.list;
+                const latest = list[0];
 
-                if (rawData.code === 0) {
-                    updateUI(rawData.data.list);
-                    status.innerText = "● SYSTEM CONNECTED (TUNNEL " + (currentProxyIndex + 1) + ")";
-                    status.classList.replace('text-yellow-600', 'text-green-500');
-                }
+                // 1. लेटेस्ट रिजल्ट को अपडेट करना
+                document.getElementById('period-text').innerText = 'Period: ' + latest.issueNumber;
+                document.getElementById('result-text').innerHTML = 
+                    `<span class="${latest.color.split(',')[0]}">${latest.number} (${latest.color})</span>`;
+
+                // 2. पूरी टेबल को अपडेट करना
+                const tbody = document.getElementById('historyBody');
+                tbody.innerHTML = list.map(item => `
+                    <tr>
+                        <td>${item.issueNumber.slice(-4)}</td>
+                        <td>${item.number}</td>
+                        <td class="${item.color.split(',')[0]}">${item.color}</td>
+                    </tr>
+                `).join('');
             } catch (err) {
-                // Switch to next proxy if one fails
-                currentProxyIndex = (currentProxyIndex + 1) % PROXIES.length;
-                status.innerText = "SWITCHING TUNNEL... RETRYING";
-                setTimeout(fetchGameData, 2000);
+                console.error("Data Fetch Error:", err);
             }
         }
 
-        function updateUI(list) {
-            const last = list[0];
-            const num = parseInt(last.number);
-            
-            // Prediction Logic
-            const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
-            const nextSize = (num <= 4) ? "BIG" : "SMALL";
+        // टाइमर लॉजिक
+        setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                countdown = 30;
+                fetchWinGoData();
+            }
+            document.getElementById('timer').innerText = countdown;
+        }, 1000);
 
-            document.getElementById('res-color').innerText = nextColor;
-            document.getElementById('res-color').className = `text-4xl font-black italic ${nextColor === 'RED' ? 'text-glow-red' : 'text-glow-green'}`;
-            document.getElementById('res-size').innerText = nextSize;
-            document.getElementById('res-period').innerText = (BigInt(last.issueNumber) + 1n).toString();
-
-            const tbody = document.getElementById('gameHistory');
-            tbody.innerHTML = list.slice(0, 8).map(g => `
-                <tr class="border-b border-gray-900">
-                    <td class="p-4 text-gray-500 font-bold">${g.issueNumber.slice(-5)}</td>
-                    <td class="p-4 text-center font-black text-lg ${g.color.includes('red') ? 'text-red-500' : 'text-green-500'}">${g.number}</td>
-                    <td class="p-4 text-right font-black ${parseInt(g.number) <= 4 ? 'text-blue-400' : 'text-yellow-600'}">${parseInt(g.number) <= 4 ? 'SMALL' : 'BIG'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function forceRefresh() {
-            document.getElementById('status-bar').innerText = "RE-SYNCING DATA...";
-            fetchGameData();
-        }
-
-        setInterval(fetchGameData, 10000);
-        fetchGameData();
+        // पेज लोड होते ही कॉल करें
+        fetchWinGoData();
     </script>
 </body>
 </html>
