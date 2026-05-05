@@ -2,62 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Live Monitor</title>
+    <title>WinGo Live Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #0f172a; color: #e2e8f0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #334155; }
-        .last-result { font-size: 2em; font-weight: bold; margin: 10px 0; }
+        .timer { font-size: 3em; font-weight: bold; color: #fbbf24; margin: 10px 0; }
+        .last-result { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
         .green { color: #22c55e; }
         .red { color: #ef4444; }
-        table { border-collapse: collapse; width: 100%; background: #1e293b; color: #cbd5e1; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; border-bottom: 1px solid #334155; text-align: center; }
-        th { background-color: #334155; }
-        #status { font-size: 0.9em; margin-top: 5px; color: #94a3b8; }
+        table { border-collapse: collapse; width: 100%; background: #1e293b; border-radius: 8px; }
+        th, td { padding: 10px; border-bottom: 1px solid #334155; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Latest Trend</h2>
-        <div id="latest-info" class="last-result">Loading...</div>
-        <div id="status">Connecting...</div>
+    <div class="container">
+        <div class="card">
+            <h2>Next Draw Countdown</h2>
+            <div id="timer" class="timer">30s</div>
+            <div id="latest-info" class="last-result">Loading...</div>
+        </div>
+        
+        <table>
+            <thead><tr><th>Issue</th><th>No.</th><th>Color</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+        </table>
     </div>
-    
-    <table id="historyTable">
-        <thead>
-            <tr><th>Issue</th><th>Number</th><th>Color</th></tr>
-        </thead>
-        <tbody></tbody>
-    </table>
 
     <script>
-        async function updateDashboard() {
+        let countdown = 30;
+        
+        async function updateData() {
             try {
                 const response = await fetch('https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json');
                 const data = await response.json();
                 const list = data.data.list;
                 const latest = list[0];
                 
-                // Latest result display
-                const latestDiv = document.getElementById('latest-info');
-                latestDiv.innerHTML = `Issue: ${latest.issueNumber} <br> <span class="${latest.color.split(',')[0]}">${latest.number} - ${latest.color}</span>`;
+                document.getElementById('latest-info').innerHTML = 
+                    `Last Result: <span class="${latest.color.split(',')[0]}">${latest.number}</span>`;
                 
-                // Update table
-                const tbody = document.querySelector('#historyTable tbody');
-                tbody.innerHTML = list.map(item => `
+                document.getElementById('historyBody').innerHTML = list.map(item => `
                     <tr>
                         <td>${item.issueNumber.slice(-4)}</td>
                         <td>${item.number}</td>
                         <td class="${item.color.split(',')[0]}">${item.color}</td>
                     </tr>
                 `).join('');
-                
-                document.getElementById('status').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
-            } catch (e) {
-                document.getElementById('status').innerText = 'Connection Error';
-            }
+            } catch (e) { console.error(e); }
         }
-        setInterval(updateDashboard, 3000);
-        updateDashboard();
+
+        setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                countdown = 30;
+                updateData();
+            }
+            document.getElementById('timer').innerText = countdown + 's';
+        }, 1000);
+
+        updateData();
     </script>
 </body>
 </html>
