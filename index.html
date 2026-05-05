@@ -1,81 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Real-Time Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VANRAJ AI PRO - UNSTOPPABLE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #fff; padding: 15px; }
-        .container { max-width: 500px; margin: auto; }
-        /* मुख्य रिजल्ट कार्ड */
-        .result-card { background: #1e293b; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid #22c55e; margin-bottom: 20px; }
-        .latest-period { font-size: 0.9em; color: #94a3b8; }
-        .latest-value { font-size: 3em; font-weight: bold; margin: 10px 0; color: #fbbf24; }
-        .timer-box { font-size: 1.5em; color: #ef4444; font-weight: bold; }
-        /* टेबल स्टाइल */
-        table { width: 100%; border-collapse: collapse; background: #1e293b; color: #fff; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
-        th { background: #334155; }
-        .green { color: #22c55e; font-weight: bold; }
-        .red { color: #ef4444; font-weight: bold; }
+        body { background: #000; color: #fff; font-family: sans-serif; overflow-x: hidden; }
+        .neon-border { border: 1px solid #333; box-shadow: 0 0 15px rgba(234,179,8,0.1); }
+        .text-glow { text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .bg-card { background: linear-gradient(145deg, #111, #050505); }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- सबसे पहले रिजल्ट -->
-        <div class="result-card">
-            <div class="latest-period" id="period-text">Loading Period...</div>
-            <div class="latest-value" id="result-text">--</div>
-            <div class="timer-box">Next Draw: <span id="timer">30</span>s</div>
+<body class="p-4">
+
+    <div class="text-center mb-6">
+        <h1 class="text-3xl font-black italic text-yellow-500 tracking-tighter">VANRAJ AI PRO</h1>
+        <div id="status-chip" class="inline-block px-3 py-1 bg-yellow-900/30 rounded-full border border-yellow-700/50 mt-2">
+            <span class="text-[9px] font-bold text-yellow-500 uppercase tracking-widest" id="status-text">Ready to Analyse</span>
         </div>
-        
-        <!-- रियल-टाइम हिस्ट्री -->
-        <table>
-            <thead><tr><th>Period</th><th>No.</th><th>Color</th></tr></thead>
-            <tbody id="historyBody"></tbody>
+    </div>
+
+    <div class="bg-card rounded-[2.5rem] p-8 mb-6 neon-border border-t-4 border-t-yellow-600">
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
+                <p class="text-[10px] text-gray-500 uppercase mb-2">Next Color</p>
+                <div id="res-color" class="text-3xl font-black italic">---</div>
+            </div>
+            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
+                <p class="text-[10px] text-gray-500 uppercase mb-2">Next Size</p>
+                <div id="res-size" class="text-3xl font-black text-yellow-500 italic">---</div>
+            </div>
+        </div>
+        <div class="text-center border-t border-gray-800 pt-4">
+            <p class="text-[10px] text-gray-500 uppercase mb-1">Upcoming Period</p>
+            <p id="res-period" class="text-xl font-mono font-black text-white italic tracking-widest text-glow">---</p>
+        </div>
+    </div>
+
+    <div id="manual-area" class="mb-6 p-6 bg-gray-900/50 rounded-3xl border border-dashed border-gray-700">
+        <p class="text-center text-[10px] text-gray-400 mb-3 uppercase font-bold">Manual Sync (Enter Last Number)</p>
+        <div class="flex gap-2">
+            <input type="number" id="manual-num" placeholder="0-9" class="w-full bg-black border border-gray-700 rounded-xl p-4 text-center text-2xl font-black outline-none focus:border-yellow-600 transition-all">
+            <button onclick="manualProcess()" class="bg-yellow-600 text-black px-6 rounded-xl font-black active:scale-95 transition-all text-xs">ANALYSE</button>
+        </div>
+    </div>
+
+    <div class="bg-gray-900/40 rounded-3xl border border-gray-800 overflow-hidden backdrop-blur-md">
+        <table class="w-full text-[11px] font-mono">
+            <thead class="bg-black/60 text-gray-500 uppercase">
+                <tr><th class="p-4 text-left">Period</th><th class="p-4 text-center">Num</th><th class="p-4 text-right">Size</th></tr>
+            </thead>
+            <tbody id="gameHistory" class="divide-y divide-gray-800/50">
+                <tr><td colspan="3" class="p-8 text-center text-gray-600 italic">Waiting for data stream...</td></tr>
+            </tbody>
         </table>
     </div>
 
     <script>
-        let countdown = 30;
-        
-        async function fetchWinGoData() {
-            try {
-                const response = await fetch('https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json');
-                const json = await response.json();
-                const list = json.data.list;
-                const latest = list[0];
+        // Automatic AI Logic
+        function updateUI(number, issue) {
+            const num = parseInt(number);
+            const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
+            const nextSize = (num <= 4) ? "BIG" : "SMALL";
 
-                // 1. लेटेस्ट रिजल्ट को अपडेट करना
-                document.getElementById('period-text').innerText = 'Period: ' + latest.issueNumber;
-                document.getElementById('result-text').innerHTML = 
-                    `<span class="${latest.color.split(',')[0]}">${latest.number} (${latest.color})</span>`;
-
-                // 2. पूरी टेबल को अपडेट करना
-                const tbody = document.getElementById('historyBody');
-                tbody.innerHTML = list.map(item => `
-                    <tr>
-                        <td>${item.issueNumber.slice(-4)}</td>
-                        <td>${item.number}</td>
-                        <td class="${item.color.split(',')[0]}">${item.color}</td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error("Data Fetch Error:", err);
+            document.getElementById('res-color').innerText = nextColor;
+            document.getElementById('res-color').style.color = (nextColor === "RED") ? "#ef4444" : "#22c55e";
+            document.getElementById('res-size').innerText = nextSize;
+            
+            if(issue) {
+                document.getElementById('res-period').innerText = (BigInt(issue) + 1n).toString();
+            } else {
+                document.getElementById('res-period').innerText = "NEXT ROUND";
             }
         }
 
-        // टाइमर लॉजिक
-        setInterval(() => {
-            countdown--;
-            if (countdown <= 0) {
-                countdown = 30;
-                fetchWinGoData();
+        // Manual Entry Handler
+        function manualProcess() {
+            const input = document.getElementById('manual-num');
+            const val = input.value;
+            if(val === "" || val < 0 || val > 9) {
+                alert("Please enter a valid number (0-9)");
+                return;
             }
-            document.getElementById('timer').innerText = countdown;
-        }, 1000);
+            document.getElementById('status-text').innerText = "Analysing Manual Input...";
+            updateUI(val, null);
+            input.value = "";
+        }
 
-        // पेज लोड होते ही कॉल करें
-        fetchWinGoData();
+        // Auto Sync Engine (Updated for your specific data log)
+        async function fetchAuto() {
+            const status = document.getElementById('status-text');
+            try {
+                const api = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now();
+                const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(api);
+                
+                const response = await fetch(proxy);
+                const json = await response.json();
+                const data = JSON.parse(json.contents);
+                
+                if(data.code === 0) {
+                    const list = data.data.list;
+                    updateUI(list[0].number, list[0].issueNumber);
+                    
+                    const tbody = document.getElementById('gameHistory');
+                    tbody.innerHTML = list.slice(0, 5).map(g => `
+                        <tr class="border-b border-gray-900">
+                            <td class="p-4 text-gray-500">${g.issueNumber.slice(-4)}</td>
+                            <td class="p-4 text-center font-black ${g.color.includes('red') ? 'text-red-500' : 'text-green-500'}">${g.number}</td>
+                            <td class="p-4 text-right font-black ${parseInt(g.number) <= 4 ? 'text-blue-400' : 'text-yellow-600'}">${parseInt(g.number) <= 4 ? 'SMALL' : 'BIG'}</td>
+                        </tr>
+                    `).join('');
+                    
+                    status.innerText = "Live Sync Active";
+                    status.style.color = "#22c55e";
+                }
+            } catch (e) {
+                status.innerText = "Sync Error - Use Manual Mode";
+                status.style.color = "#ef4444";
+            }
+        }
+
+        setInterval(fetchAuto, 10000);
+        fetchAuto();
     </script>
 </body>
 </html>
