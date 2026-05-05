@@ -3,121 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI PRO - 99% WORKING</title>
+    <title>VANRAJ AI PRO - FIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; }
-        .main-card { background: linear-gradient(180deg, #121212 0%, #080808 100%); border: 1px solid #222; }
-        .glow-box { box-shadow: 0 0 30px rgba(234, 179, 8, 0.1); }
-        .text-glow-green { text-shadow: 0 0 15px #22c55e; color: #22c55e; }
-        .text-glow-red { text-shadow: 0 0 15px #ef4444; color: #ef4444; }
+        body { background: #000; color: #fff; font-family: sans-serif; }
+        .main-card { background: linear-gradient(180deg, #111 0%, #050505 100%); border: 1px solid #222; }
+        .text-glow-green { text-shadow: 0 0 10px #22c55e; color: #22c55e; }
+        .text-glow-red { text-shadow: 0 0 10px #ef4444; color: #ef4444; }
     </style>
 </head>
 <body class="p-4">
 
     <div class="text-center mb-6">
-        <h1 class="text-3xl font-black italic tracking-tighter text-yellow-500">VANRAJ AI PRO</h1>
-        <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Advanced Probability Engine</p>
+        <h1 class="text-3xl font-black italic text-yellow-500">VANRAJ AI PRO</h1>
+        <p id="status-bar" class="text-[9px] text-yellow-600 font-bold tracking-[0.2em]">INITIALIZING SECURE TUNNEL...</p>
     </div>
 
-    <div class="main-card rounded-[2.5rem] p-8 mb-6 glow-box border-t-4 border-t-yellow-600 relative">
-        <div class="absolute top-4 right-6 flex items-center gap-1">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-            <span class="text-[9px] font-bold text-green-500">LIVE SYNC</span>
-        </div>
-
-        <p class="text-[11px] text-gray-500 font-bold uppercase text-center mb-6 tracking-widest">Upcoming Result Prediction</p>
-        
+    <div class="main-card rounded-[2.5rem] p-8 mb-6 border-t-4 border-yellow-600 shadow-2xl">
         <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="text-center p-4 bg-black/40 rounded-3xl border border-gray-800">
+            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
                 <p class="text-[10px] text-gray-500 uppercase mb-2">Color AI</p>
-                <div id="res-color" class="text-4xl font-black">---</div>
+                <div id="res-color" class="text-4xl font-black italic">---</div>
             </div>
-            <div class="text-center p-4 bg-black/40 rounded-3xl border border-gray-800">
+            <div class="text-center p-4 bg-black/60 rounded-3xl border border-gray-800">
                 <p class="text-[10px] text-gray-500 uppercase mb-2">Size AI</p>
-                <div id="res-size" class="text-4xl font-black text-yellow-500">---</div>
+                <div id="res-size" class="text-4xl font-black text-yellow-500 italic">---</div>
             </div>
         </div>
-
         <div class="text-center">
-            <p class="text-[10px] text-gray-500 uppercase mb-1">Next Target Period</p>
-            <p id="res-period" class="text-xl font-mono font-black text-white tracking-widest italic">WAITING...</p>
+            <p class="text-[10px] text-gray-500 uppercase mb-1">Target Period</p>
+            <p id="res-period" class="text-xl font-mono font-black text-white italic">SCANNING...</p>
         </div>
     </div>
 
-    <button onclick="fetchLatestData()" class="w-full py-5 bg-yellow-600 text-black font-black rounded-2xl mb-8 shadow-[0_10px_20px_rgba(202,138,4,0.3)] active:scale-95 transition-all uppercase tracking-widest text-sm">Refresh Real-Time Analysis</button>
+    <button onclick="forceRefresh()" class="w-full py-5 bg-yellow-600 text-black font-black rounded-2xl mb-8 shadow-xl active:scale-95 transition-all text-sm uppercase">Manual Force Sync</button>
 
-    <div class="bg-gray-900/40 rounded-3xl border border-gray-800 overflow-hidden backdrop-blur-sm">
-        <div class="p-4 bg-gray-900/80 border-b border-gray-800 flex justify-between items-center">
-            <h2 class="text-xs font-bold text-gray-400 uppercase italic">Recent Results</h2>
-            <span id="sync-time" class="text-[9px] text-gray-600 font-mono font-bold uppercase"></span>
-        </div>
+    <div class="bg-gray-900/40 rounded-3xl border border-gray-800 overflow-hidden">
         <table class="w-full text-[11px] font-mono">
-            <thead class="text-gray-500 uppercase bg-black/20">
-                <tr>
-                    <th class="p-4 text-left">Period</th>
-                    <th class="p-4 text-center">Num</th>
-                    <th class="p-4 text-right">Size</th>
-                </tr>
+            <thead class="text-gray-500 uppercase bg-black/40">
+                <tr><th class="p-4 text-left">Period</th><th class="p-4 text-center">Num</th><th class="p-4 text-right">Size</th></tr>
             </thead>
-            <tbody id="gameHistory" class="divide-y divide-gray-800/50">
-                </tbody>
+            <tbody id="gameHistory" class="divide-y divide-gray-800/50"></tbody>
         </table>
     </div>
 
     <script>
-        async function fetchLatestData() {
-            const syncLabel = document.getElementById('sync-time');
+        const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+        // Multiple Proxies to prevent "Waiting" error
+        const PROXIES = [
+            "https://api.allorigins.win/get?url=",
+            "https://thingproxy.freeboard.io/fetch/",
+            "https://corsproxy.io/?"
+        ];
+        let currentProxyIndex = 0;
+
+        async function fetchGameData() {
+            const status = document.getElementById('status-bar');
             try {
-                // API URL based on your provided log
-                const api = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now();
-                const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(api);
+                const finalUrl = PROXIES[currentProxyIndex] + encodeURIComponent(API_URL + "?ts=" + Date.now());
+                const response = await fetch(finalUrl);
                 
-                const response = await fetch(proxy);
-                const json = await response.json();
-                const data = JSON.parse(json.contents);
-                
-                if(data.code === 0) {
-                    const list = data.data.list;
-                    const last = list[0]; // Recent result (e.g. Number 6)
-                    
-                    // --- ENHANCED AI PREDICTION LOGIC ---
-                    // Using trend analysis from your specific data
-                    const lastNum = parseInt(last.number);
-                    const lastColor = last.color;
-                    
-                    // Logic: If pattern repeats or breaks based on last 2 rounds
-                    const nextColor = (lastNum % 2 === 0) ? "GREEN" : "RED";
-                    const nextSize = (lastNum <= 4) ? "BIG" : "SMALL";
-
-                    // Update Prediction UI
-                    document.getElementById('res-color').innerText = nextColor;
-                    document.getElementById('res-color').className = `text-4xl font-black ${nextColor === 'RED' ? 'text-glow-red' : 'text-glow-green'}`;
-                    
-                    document.getElementById('res-size').innerText = nextSize;
-                    document.getElementById('res-period').innerText = (BigInt(last.issueNumber) + 1n).toString();
-
-                    // Update Table History
-                    const tbody = document.getElementById('gameHistory');
-                    tbody.innerHTML = list.slice(0, 10).map(g => `
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="p-4 text-gray-400 font-bold">${g.issueNumber.slice(-5)}</td>
-                            <td class="p-4 text-center font-black text-lg ${g.color.includes('red') ? 'text-red-500' : 'text-green-500'}">${g.number}</td>
-                            <td class="p-4 text-right font-black ${parseInt(g.number) <= 4 ? 'text-blue-400' : 'text-yellow-600'}">${parseInt(g.number) <= 4 ? 'SMALL' : 'BIG'}</td>
-                        </tr>
-                    `).join('');
-                    
-                    syncLabel.innerText = "Updated: " + new Date().toLocaleTimeString();
+                let rawData;
+                if (currentProxyIndex === 0) {
+                    const json = await response.json();
+                    rawData = JSON.parse(json.contents);
+                } else {
+                    rawData = await response.json();
                 }
-            } catch (error) {
-                console.error("Sync failed");
-                syncLabel.innerText = "Retrying...";
+
+                if (rawData.code === 0) {
+                    updateUI(rawData.data.list);
+                    status.innerText = "● SYSTEM CONNECTED (TUNNEL " + (currentProxyIndex + 1) + ")";
+                    status.classList.replace('text-yellow-600', 'text-green-500');
+                }
+            } catch (err) {
+                // Switch to next proxy if one fails
+                currentProxyIndex = (currentProxyIndex + 1) % PROXIES.length;
+                status.innerText = "SWITCHING TUNNEL... RETRYING";
+                setTimeout(fetchGameData, 2000);
             }
         }
 
-        // Auto Refresh every 8 seconds for 30s game
-        setInterval(fetchLatestData, 8000);
-        fetchLatestData();
+        function updateUI(list) {
+            const last = list[0];
+            const num = parseInt(last.number);
+            
+            // Prediction Logic
+            const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
+            const nextSize = (num <= 4) ? "BIG" : "SMALL";
+
+            document.getElementById('res-color').innerText = nextColor;
+            document.getElementById('res-color').className = `text-4xl font-black italic ${nextColor === 'RED' ? 'text-glow-red' : 'text-glow-green'}`;
+            document.getElementById('res-size').innerText = nextSize;
+            document.getElementById('res-period').innerText = (BigInt(last.issueNumber) + 1n).toString();
+
+            const tbody = document.getElementById('gameHistory');
+            tbody.innerHTML = list.slice(0, 8).map(g => `
+                <tr class="border-b border-gray-900">
+                    <td class="p-4 text-gray-500 font-bold">${g.issueNumber.slice(-5)}</td>
+                    <td class="p-4 text-center font-black text-lg ${g.color.includes('red') ? 'text-red-500' : 'text-green-500'}">${g.number}</td>
+                    <td class="p-4 text-right font-black ${parseInt(g.number) <= 4 ? 'text-blue-400' : 'text-yellow-600'}">${parseInt(g.number) <= 4 ? 'SMALL' : 'BIG'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function forceRefresh() {
+            document.getElementById('status-bar').innerText = "RE-SYNCING DATA...";
+            fetchGameData();
+        }
+
+        setInterval(fetchGameData, 10000);
+        fetchGameData();
     </script>
 </body>
 </html>
