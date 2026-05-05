@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo History Analysis</title>
+    <title>Live WinGo Tracker</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
+        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: #fff; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; color: #000; }
+        th, td { border: 1px solid #444; padding: 10px; text-align: center; background: #fff; }
+        th { background-color: #333; color: #fff; }
         .green { color: green; font-weight: bold; }
         .red { color: red; font-weight: bold; }
+        #status { margin-top: 10px; color: #0f0; }
     </style>
 </head>
 <body>
-    <h2>WinGo Recent History</h2>
-    <table>
+    <h2>Live WinGo Data Stream</h2>
+    <div id="status">Fetching data...</div>
+    <table id="historyTable">
         <thead>
             <tr>
                 <th>Issue Number</th>
@@ -22,58 +24,38 @@
                 <th>Color</th>
             </tr>
         </thead>
-        <tbody>
-            <tr>
-                <td>20260505100051344</td>
-                <td>1</td>
-                <td class="green">green</td>
-            </tr>
-            <tr>
-                <td>20260505100051343</td>
-                <td>8</td>
-                <td class="red">red</td>
-            </tr>
-            <tr>
-                <td>20260505100051342</td>
-                <td>2</td>
-                <td class="red">red</td>
-            </tr>
-            <tr>
-                <td>20260505100051341</td>
-                <td>5</td>
-                <td class="green">green,violet</td>
-            </tr>
-            <tr>
-                <td>20260505100051340</td>
-                <td>8</td>
-                <td class="red">red</td>
-            </tr>
-            <tr>
-                <td>20260505100051339</td>
-                <td>5</td>
-                <td class="green">green,violet</td>
-            </tr>
-            <tr>
-                <td>20260505100051338</td>
-                <td>4</td>
-                <td class="red">red</td>
-            </tr>
-            <tr>
-                <td>20260505100051337</td>
-                <td>4</td>
-                <td class="red">red</td>
-            </tr>
-            <tr>
-                <td>20260505100051336</td>
-                <td>0</td>
-                <td class="red">red,violet</td>
-            </tr>
-            <tr>
-                <td>20260505100051335</td>
-                <td>3</td>
-                <td class="green">green</td>
-            </tr>
-        </tbody>
+        <tbody></tbody>
     </table>
+
+    <script>
+        async function fetchData() {
+            try {
+                // API से डेटा फेच करने का कोड
+                const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+                const response = await fetch(url);
+                const result = await response.json();
+                const list = result.data.list;
+                
+                const tbody = document.querySelector('#historyTable tbody');
+                tbody.innerHTML = '';
+                
+                list.forEach(item => {
+                    const row = `<tr>
+                        <td>${item.issueNumber}</td>
+                        <td>${item.number}</td>
+                        <td class="${item.color.split(',')[0]}">${item.color}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+                document.getElementById('status').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
+            } catch (e) {
+                document.getElementById('status').innerText = 'Error fetching data: ' + e.message;
+            }
+        }
+        
+        // 5 सेकंड में ऑटो-रिफ्रेश
+        setInterval(fetchData, 5000);
+        fetchData();
+    </script>
 </body>
 </html>
