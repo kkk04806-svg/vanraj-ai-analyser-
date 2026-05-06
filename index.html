@@ -2,28 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Live</title>
+    <title>WinGo Smart Analyst</title>
     <style>
-        body { background: #0f172a; color: white; padding: 20px; font-family: sans-serif; }
+        body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
+        .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+        .win-rate { font-size: 1.2em; color: #38bdf8; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
+        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
+        .red { color: #ef4444; } .green { color: #22c55e; }
     </style>
 </head>
 <body>
-    <div id="display">Fetching...</div>
+    <div class="card">
+        <h3>Smart Trend Analyst</h3>
+        <div id="analysis" class="win-rate">Analyzing...</div>
+    </div>
+    <table id="historyTable">
+        <thead><tr><th>Issue</th><th>No.</th><th>Color</th></tr></thead>
+        <tbody id="tbody"></tbody>
+    </table>
+
     <script>
-        async function fetchDirect() {
-            // कोई Proxy नहीं, सीधे कॉल
-            const url = 'fetch('https://api.frastonikelubra.com';
+        async function analyzeData() {
+            // आपका दिया गया API URL
+            const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+            
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                document.getElementById('display').innerText = 'Latest Issue: ' + data.data.list[0].issueNumber;
+                // सीधे डेटा फेच (CORS Proxy के साथ)
+                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
+                const list = data.data.list;
+                
+                // एनालिसिस लॉजिक
+                let redCount = 0, greenCount = 0;
+                list.slice(0, 10).forEach(i => {
+                    if(i.color.includes('red')) redCount++;
+                    if(i.color.includes('green')) greenCount++;
+                });
+                
+                document.getElementById('analysis').innerHTML = 
+                    `Red: ${redCount} | Green: ${greenCount}<br> 
+                    Next Prediction: ${redCount > greenCount ? '<span class="green">Next: Green</span>' : '<span class="red">Next: Red</span>'}`;
+                
+                // टेबल अपडेट
+                document.getElementById('tbody').innerHTML = list.map(i => `
+                    <tr><td>${i.issueNumber.slice(-4)}</td><td>${i.number}</td><td class="${i.color.includes('red')?'red':'green'}">${i.color}</td></tr>
+                `).join('');
             } catch (err) {
-                document.getElementById('display').innerHTML = 
-                    'Error: ' + err.message + 
-                    '<br>सॉल्यूशन: Chrome में "Allow CORS: Access-Control-Allow-Origin" एक्सटेंशन इंस्टॉल करें!';
+                document.getElementById('analysis').innerText = "Error: Use Chrome Extension for CORS!";
             }
         }
-        fetchDirect();
+        setInterval(analyzeData, 3000);
+        analyzeData();
     </script>
 </body>
 </html>
