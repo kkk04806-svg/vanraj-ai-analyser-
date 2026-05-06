@@ -2,60 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo 1M Smart Analyst</title>
+    <title>WinGo Live Admin</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #fbbf24; }
-        .val { font-size: 1.5em; font-weight: bold; color: #fbbf24; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; margin-top: 10px; }
-        th, td { padding: 8px; border: 1px solid #334155; text-align: center; }
-        .big { color: #f59e0b; } .small { color: #8b5cf6; }
+        body { background: #0f172a; color: #fff; font-family: sans-serif; padding: 10px; }
+        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; text-align: center; border: 2px solid #38bdf8; }
+        .big-val { font-size: 2.2em; font-weight: bold; color: #fbbf24; }
+        .label { font-size: 0.8em; color: #94a3b8; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
+        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div id="status">Connecting...</div>
-        <div id="issue" class="val">--</div>
-        <div id="prediction" class="val" style="color: #22c55e;">Wait...</div>
+        <div class="label">LIVE RESULT</div>
+        <div id="res-val" class="big-val">Connecting...</div>
+        <div id="period-val" class="label">--</div>
     </div>
-    <table>
-        <thead><tr><th>Period</th><th>Num</th><th>Size</th></tr></thead>
+    
+    <table id="historyTable">
+        <thead><tr><th>Period</th><th>Num</th><th>Color</th></tr></thead>
         <tbody id="tbody"></tbody>
     </table>
 
     <script>
-        async function fetchGame() {
-            // CodeTabs Proxy का उपयोग
+        async function getData() {
             const target = 'https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json';
-            const url = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target);
+            const proxy = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target);
             
             try {
-                const res = await fetch(url);
+                const res = await fetch(proxy);
                 const data = await res.json();
                 const list = data.data.list.sort((a,b) => b.issueNumber - a.issueNumber);
-                const last = list[0];
+                const current = list[0];
+
+                // सबसे पहले रिजल्ट अपडेट करें
+                document.getElementById('res-val').innerText = current.number + ' (' + (current.number >= 5 ? 'Big' : 'Small') + ')';
+                document.getElementById('period-val').innerText = 'Issue: ' + current.issueNumber;
                 
-                // Big/Small Logic
-                const num = parseInt(last.number);
-                const size = num >= 5 ? 'Big' : 'Small';
-                
-                document.getElementById('status').innerText = 'System Online';
-                document.getElementById('issue').innerText = 'Issue: ' + last.issueNumber;
-                document.getElementById('prediction').innerText = 'Result: ' + num + ' (' + size + ')';
-                
-                document.getElementById('tbody').innerHTML = list.map(i => `
-                    <tr>
-                        <td>${i.issueNumber.slice(-4)}</td>
-                        <td>${i.number}</td>
-                        <td class="${parseInt(i.number)>=5?'big':'small'}">${parseInt(i.number)>=5?'Big':'Small'}</td>
-                    </tr>
+                // हिस्ट्री टेबल
+                document.getElementById('tbody').innerHTML = list.slice(0, 8).map(i => `
+                    <tr><td>${i.issueNumber.slice(-4)}</td><td>${i.number}</td><td>${i.color}</td></tr>
                 `).join('');
-            } catch(e) {
-                document.getElementById('status').innerText = 'Proxy Error: Refresh Page!';
+            } catch (e) {
+                document.getElementById('res-val').innerText = "Error!";
             }
         }
-        setInterval(fetchGame, 3000);
-        fetchGame();
+        setInterval(getData, 2000);
+        getData();
     </script>
 </body>
 </html>
