@@ -2,59 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Big/Small Analyst</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinGo Accurate Tracker</title>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: center; border: 1px solid #38bdf8; }
-        .stat { font-size: 1.2em; font-weight: bold; margin: 5px 0; }
-        .big { color: #f59e0b; } .small { color: #8b5cf6; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
-        th, td { padding: 8px; border: 1px solid #334155; text-align: center; }
+        .card { background: #1e293b; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 10px; border: 1px solid #38bdf8; }
+        .val { font-size: 1.5em; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; margin-top: 10px; }
+        th, td { padding: 8px; border: 1px solid #334155; text-align: center; font-size: 0.9em; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h3>Live Analyst (Big/Small)</h3>
-        <div id="analyst-output" class="stat">Analyzing data...</div>
+        <div id="status">System Starting...</div>
+        <div id="latest-period" class="val">--</div>
+        <div id="latest-num" class="val">--</div>
     </div>
-    
     <table id="historyTable">
-        <thead><tr><th>Issue</th><th>No.</th><th>Result</th></tr></thead>
+        <thead><tr><th>Period</th><th>No.</th><th>Size</th></tr></thead>
         <tbody id="tbody"></tbody>
     </table>
 
     <script>
-        async function runAnalysis() {
+        async function updateAccurate() {
             const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
             try {
-                // सीधे फेच (CORS एक्सटेंशन ऑन रखें)
                 const res = await fetch(url);
                 const json = await res.json();
-                const list = json.data.list;
                 
-                let big = 0, small = 0;
-                list.slice(0, 10).forEach(i => {
-                    const num = parseInt(i.number);
-                    if(num >= 5) big++; else small++;
-                });
-
-                document.getElementById('analyst-output').innerHTML = 
-                    `Big: ${big} | Small: ${small}<br>
-                    Next Prediction: ${big > small ? '<span class="big">Big</span>' : '<span class="small">Small</span>'}`;
+                // हमेशा सबसे नया डेटा ऊपर रखने के लिए सॉर्टिंग
+                const list = json.data.list.sort((a, b) => b.issueNumber - a.issueNumber);
+                const latest = list[0];
                 
-                document.getElementById('tbody').innerHTML = list.map(i => `
+                document.getElementById('status').innerText = 'System Online';
+                document.getElementById('latest-period').innerText = 'Issue: ' + latest.issueNumber;
+                document.getElementById('latest-num').innerText = 'Result: ' + latest.number + ' (' + (parseInt(latest.number) >= 5 ? 'Big' : 'Small') + ')';
+                
+                const tbody = document.getElementById('tbody');
+                tbody.innerHTML = list.map(i => `
                     <tr>
                         <td>${i.issueNumber.slice(-4)}</td>
                         <td>${i.number}</td>
-                        <td class="${parseInt(i.number)>=5?'big':'small'}">${parseInt(i.number)>=5?'Big':'Small'}</td>
+                        <td>${parseInt(i.number) >= 5 ? 'Big' : 'Small'}</td>
                     </tr>
                 `).join('');
             } catch (err) {
-                document.getElementById('analyst-output').innerHTML = "CORS Error! Extention On करें!";
+                document.getElementById('status').innerText = 'Error: CORS Extension ON करें!';
             }
         }
-        setInterval(runAnalysis, 3000);
-        runAnalysis();
+        // 2 सेकंड का रिफ्रेश रेट
+        setInterval(updateAccurate, 2000);
+        updateAccurate();
     </script>
 </body>
 </html>
