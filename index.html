@@ -1,54 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>WinGo Live Admin</title>
-    <style>
-        body { background: #0f172a; color: #fff; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; text-align: center; border: 2px solid #38bdf8; }
-        .big-val { font-size: 2.2em; font-weight: bold; color: #fbbf24; }
-        .label { font-size: 0.8em; color: #94a3b8; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
-        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WinGo Smart Analyzer</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .title {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+    .big-result {
+      font-size: 34px;
+      font-weight: 700;
+      color: #fbbf24;
+      margin: 6px 0;
+    }
+    .period {
+      font-size: 18px;
+      font-weight: 700;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+    .analysis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .mini {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .mini h4 {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: normal;
+    }
+    .mini .val {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .green { color: #22c55e; }
+    .red { color: #ef4444; }
+    .violet { color: #a855f7; }
+    .big { color: #f59e0b; }
+    .small { color: #60a5fa; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #1e293b;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #334155;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #334155;
+      color: #fff;
+    }
+    .status {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #22c55e;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="status" id="status">Connecting...</div>
+
     <div class="card">
-        <div class="label">LIVE RESULT</div>
-        <div id="res-val" class="big-val">Connecting...</div>
-        <div id="period-val" class="label">--</div>
+      <div class="title">LATEST RESULT</div>
+      <div class="period" id="latestPeriod">Loading...</div>
+      <div class="big-result" id="latestResult">--</div>
+      <div id="latestColor" style="font-size:14px;color:#94a3b8;">--</div>
     </div>
-    
-    <table id="historyTable">
-        <thead><tr><th>Period</th><th>Num</th><th>Color</th></tr></thead>
-        <tbody id="tbody"></tbody>
-    </table>
 
-    <script>
-        async function getData() {
-            const target = 'https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json';
-            const proxy = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target);
-            
-            try {
-                const res = await fetch(proxy);
-                const data = await res.json();
-                const list = data.data.list.sort((a,b) => b.issueNumber - a.issueNumber);
-                const current = list[0];
+    <div class="analysis">
+      <div class="mini">
+        <h4>BIG / SMALL</h4>
+        <div class="val" id="bigSmall">--</div>
+      </div>
+      <div class="mini">
+        <h4>NEXT ANALYSIS</h4>
+        <div class="val" id="nextAnalysis">--</div>
+      </div>
+      <div class="mini">
+        <h4>GREEN COUNT</h4>
+        <div class="val green" id="greenCount">0</div>
+      </div>
+      <div class="mini">
+        <h4>RED COUNT</h4>
+        <div class="val red" id="redCount">0</div>
+      </div>
+    </div>
 
-                // सबसे पहले रिजल्ट अपडेट करें
-                document.getElementById('res-val').innerText = current.number + ' (' + (current.number >= 5 ? 'Big' : 'Small') + ')';
-                document.getElementById('period-val').innerText = 'Issue: ' + current.issueNumber;
-                
-                // हिस्ट्री टेबल
-                document.getElementById('tbody').innerHTML = list.slice(0, 8).map(i => `
-                    <tr><td>${i.issueNumber.slice(-4)}</td><td>${i.number}</td><td>${i.color}</td></tr>
-                `).join('');
-            } catch (e) {
-                document.getElementById('res-val').innerText = "Error!";
-            }
+    <div class="card" style="margin-top:12px;">
+      <div class="title">HISTORY</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Number</th>
+            <th>Color</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function loadData() {
+      const status = document.getElementById("status");
+
+      try {
+        const url = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=" + Date.now();
+        const res = await fetch("https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url));
+        const json = await res.json();
+        const list = (json.data && json.data.list) ? json.data.list : [];
+
+        if (!list.length) {
+          status.innerText = "No data found";
+          return;
         }
-        setInterval(getData, 2000);
-        getData();
-    </script>
+
+        list.sort((a, b) => b.issueNumber.localeCompare(a.issueNumber));
+        const latest = list[0];
+
+        const num = parseInt(latest.number, 10);
+        const size = num >= 5 ? "Big" : "Small";
+        const color = latest.color || "";
+        const colorClass = color.includes("green") ? "green" : color.includes("red") ? "red" : "violet";
+
+        document.getElementById("latestPeriod").innerText = latest.issueNumber;
+        document.getElementById("latestResult").innerText = latest.number;
+        document.getElementById("latestResult").className = "big-result " + colorClass;
+        document.getElementById("latestColor").innerText = "Color: " + color;
+        document.getElementById("latestColor").className = colorClass;
+
+        document.getElementById("bigSmall").innerText = size;
+
+        let green = 0, red = 0;
+        list.slice(0, 10).forEach(item => {
+          if ((item.color || "").includes("green")) green++;
+          if ((item.color || "").includes("red")) red++;
+        });
+
+        document.getElementById("greenCount").innerText = green;
+        document.getElementById("redCount").innerText = red;
+
+        if (green > red) {
+          document.getElementById("nextAnalysis").innerText = "Green";
+          document.getElementById("nextAnalysis").className = "val green";
+        } else if (red > green) {
+          document.getElementById("nextAnalysis").innerText = "Red";
+          document.getElementById("nextAnalysis").className = "val red";
+        } else {
+          document.getElementById("nextAnalysis").innerText = "Neutral";
+          document.getElementById("nextAnalysis").className = "val violet";
+        }
+
+        document.getElementById("historyBody").innerHTML = list.slice(0, 10).map(item => {
+          const n = parseInt(item.number, 10);
+          const bs = n >= 5 ? "Big" : "Small";
+          const cls = (item.color || "").includes("green") ? "green" : (item.color || "").includes("red") ? "red" : "violet";
+          return `
+            <tr>
+              <td>${item.issueNumber}</td>
+              <td class="${cls}">${item.number}</td>
+              <td class="${cls}">${item.color} / ${bs}</td>
+            </tr>
+          `;
+        }).join("");
+
+        status.innerText = "Connected successfully";
+      } catch (e) {
+        status.innerText = "Connection failed";
+        document.getElementById("latestPeriod").innerText = "Loading...";
+        document.getElementById("latestResult").innerText = "--";
+      }
+    }
+
+    loadData();
+    setInterval(loadData, 3000);
+  </script>
 </body>
 </html>
