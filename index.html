@@ -2,55 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinGo Admin</title>
+    <title>WinGo Live</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
-        .val { font-size: 1.5em; font-weight: bold; color: #38bdf8; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; margin-top: 10px; }
-        th, td { padding: 8px; border: 1px solid #334155; text-align: center; font-size: 0.9em; }
+        body { background: #0f172a; color: white; padding: 20px; font-family: sans-serif; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div id="status">Connecting...</div>
-        <div id="period" class="val">--</div>
-    </div>
-    <table id="historyTable">
-        <thead><tr><th>Period</th><th>No.</th><th>Color</th></tr></thead>
-        <tbody id="tbody"></tbody>
-    </table>
-
+    <div id="display">Fetching...</div>
     <script>
-        async function loadData() {
-            const status = document.getElementById('status');
-            // यहाँ CORS Proxy का उपयोग किया गया है ताकि "Failed to fetch" न आए
-            const targetUrl = 'https://api.frastonikelubra.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
-            const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
-            
+        async function fetchDirect() {
+            // कोई Proxy नहीं, सीधे कॉल
+            const url = 'https://api.frastonikelubra.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
             try {
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                // Proxy डेटा को पार्स करना
-                const actualData = JSON.parse(data.contents);
-                
-                const item = actualData.data.list[0];
-                document.getElementById('period').innerText = 'Period: ' + item.issueNumber;
-                document.getElementById('status').innerText = 'Online';
-                
-                const tbody = document.getElementById('tbody');
-                tbody.innerHTML = actualData.data.list.map(i => `
-                    <tr><td>${i.issueNumber.slice(-4)}</td><td>${i.number}</td><td>${i.color}</td></tr>
-                `).join('');
-                
+                const res = await fetch(url);
+                const data = await res.json();
+                document.getElementById('display').innerText = 'Latest Issue: ' + data.data.list[0].issueNumber;
             } catch (err) {
-                status.innerHTML = 'Error: Check connection/proxy.';
-                console.error(err);
+                document.getElementById('display').innerHTML = 
+                    'Error: ' + err.message + 
+                    '<br>सॉल्यूशन: Chrome में "Allow CORS: Access-Control-Allow-Origin" एक्सटेंशन इंस्टॉल करें!';
             }
         }
-        setInterval(loadData, 5000);
-        loadData();
+        fetchDirect();
     </script>
 </body>
 </html>
