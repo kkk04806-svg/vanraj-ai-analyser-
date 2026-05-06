@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WinGo Result First Analyzer</title>
+  <title>WinGo Next Period Analyzer</title>
   <style>
     body {
       margin: 0;
@@ -36,7 +36,7 @@
       margin-bottom: 6px;
     }
     .period {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
       color: #38bdf8;
       word-break: break-all;
@@ -108,8 +108,9 @@
     <div class="status" id="status">Connecting server...</div>
 
     <div class="card">
+      <div class="title">NEXT PERIOD</div>
+      <div class="period" id="nextPeriod">Loading...</div>
       <div class="title">LATEST RESULT</div>
-      <div class="period" id="latestPeriod">Loading...</div>
       <div class="result" id="latestResult">--</div>
       <div id="latestMeta" style="font-size:14px;color:#cbd5e1;">--</div>
     </div>
@@ -149,6 +150,13 @@
   </div>
 
   <script>
+    function getNextIssue(issueNumber) {
+      const s = String(issueNumber);
+      const prefix = s.slice(0, -3);
+      const last3 = parseInt(s.slice(-3), 10);
+      return prefix + String(last3 + 1).padStart(3, "0");
+    }
+
     async function loadData() {
       const api = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=" + Date.now();
       const proxy = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(api);
@@ -172,10 +180,10 @@
         const colorClass = color.includes("green") ? "green" : color.includes("red") ? "red" : "violet";
 
         document.getElementById("status").innerText = "Server connected";
-        document.getElementById("latestPeriod").innerText = latest.issueNumber;
+        document.getElementById("nextPeriod").innerText = getNextIssue(latest.issueNumber);
         document.getElementById("latestResult").innerText = latest.number;
         document.getElementById("latestResult").className = "result " + colorClass;
-        document.getElementById("latestMeta").innerText = "Premium: " + latest.premium + " | Color: " + color;
+        document.getElementById("latestMeta").innerText = "Current Issue: " + latest.issueNumber + " | Color: " + color + " | Premium: " + latest.premium;
 
         document.getElementById("bigSmall").innerText = bigSmall;
         document.getElementById("bigSmall").className = "val " + (bigSmall === "Big" ? "big" : "small");
@@ -206,7 +214,7 @@
 
       } catch (e) {
         document.getElementById("status").innerText = "Connection failed";
-        document.getElementById("latestPeriod").innerText = "Loading...";
+        document.getElementById("nextPeriod").innerText = "Loading...";
         document.getElementById("latestResult").innerText = "--";
       }
     }
