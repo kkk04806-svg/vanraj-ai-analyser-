@@ -2,94 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinGo Admin Dashboard</title>
+    <title>Connection Debugger</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-        .dashboard-container { max-width: 800px; margin: auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #334155; }
-        .card h3 { color: #94a3b8; font-size: 0.9em; margin-bottom: 10px; }
-        .card .value { font-size: 1.8em; font-weight: bold; color: #38bdf8; }
-        .card .result { font-size: 2.5em; color: #fbbf24; }
-        
-        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #334155; }
-        th { background: #334155; }
-        .green { color: #22c55e; font-weight: bold; }
-        .red { color: #ef4444; font-weight: bold; }
-        .status-online { color: #22c55e; font-size: 0.8em; }
+        body { font-family: monospace; background: #0f172a; color: #fff; padding: 20px; }
+        .log-box { background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>Admin Control Panel <span class="status-online">● Online</span></h1>
-        </div>
-
-        <div class="card-grid">
-            <div class="card">
-                <h3>Current Period</h3>
-                <div class="value" id="current-period">Loading...</div>
-            </div>
-            <div class="card">
-                <h3>Latest Result</h3>
-                <div class="result" id="current-result">--</div>
-            </div>
-            <div class="card">
-                <h3>Time Remaining</h3>
-                <div class="value" id="timer">30s</div>
-            </div>
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Period</th>
-                    <th>Number</th>
-                    <th>Color</th>
-                </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-        </table>
-    </div>
+    <h3>API Connection Debugger</h3>
+    <div id="log" class="log-box">Connecting...</div>
 
     <script>
-        // आपके दिए गए API से कनेक्ट करने का सेटअप
-        const API_URL = 'https://api.frastonikelubra.com';
+        const log = (msg) => document.getElementById('log').innerHTML += '<br>> ' + msg;
         
-        async function fetchGameData() {
+        async function checkConnection() {
+            // अपनी सही API यहाँ डालें
+            const API_URL = 'https://api.frastonikelubra.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+            
             try {
-                const response = await fetch(`${API_URL}/WinGo/WinGo_30S/GetHistoryIssuePage.json`);
-                const data = await response.json();
-                const list = data.data.list;
-                const latest = list[0];
-
-                document.getElementById('current-period').innerText = latest.issueNumber;
-                document.getElementById('current-result').innerHTML = 
-                    `<span class="${latest.color.split(',')[0]}">${latest.number}</span>`;
+                const response = await fetch(API_URL);
+                log('Status: ' + response.status);
                 
-                document.getElementById('history-body').innerHTML = list.map(item => `
-                    <tr>
-                        <td>${item.issueNumber.slice(-4)}</td>
-                        <td>${item.number}</td>
-                        <td class="${item.color.split(',')[0]}">${item.color}</td>
-                    </tr>
-                `).join('');
+                if (response.ok) {
+                    const data = await response.json();
+                    log('Success! Data received.');
+                    console.log(data);
+                } else {
+                    log('Error: Server returned status ' + response.status);
+                }
             } catch (e) {
-                console.error("Admin API Connection Error:", e);
+                log('CONNECTION ERROR: ' + e.message);
+                log('सराहना: ब्राउज़र कंसोल (F12) देखें, शायद CORS Error है।');
             }
         }
-
-        let countdown = 30;
-        setInterval(() => {
-            countdown--;
-            if (countdown <= 0) { countdown = 30; fetchGameData(); }
-            document.getElementById('timer').innerText = countdown + 's';
-        }, 1000);
-
-        fetchGameData();
+        checkConnection();
     </script>
 </body>
 </html>
