@@ -2,57 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinGo Accurate Tracker</title>
+    <title>WinGo 1M Smart Analyst</title>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 10px; border: 1px solid #38bdf8; }
-        .val { font-size: 1.5em; font-weight: bold; }
+        .card { background: #1e293b; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #fbbf24; }
+        .val { font-size: 1.5em; font-weight: bold; color: #fbbf24; }
         table { width: 100%; border-collapse: collapse; background: #1e293b; margin-top: 10px; }
-        th, td { padding: 8px; border: 1px solid #334155; text-align: center; font-size: 0.9em; }
+        th, td { padding: 8px; border: 1px solid #334155; text-align: center; }
+        .big { color: #f59e0b; } .small { color: #8b5cf6; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div id="status">System Starting...</div>
-        <div id="latest-period" class="val">--</div>
-        <div id="latest-num" class="val">--</div>
+        <div id="status">Connecting...</div>
+        <div id="issue" class="val">--</div>
+        <div id="prediction" class="val" style="color: #22c55e;">Wait...</div>
     </div>
-    <table id="historyTable">
-        <thead><tr><th>Period</th><th>No.</th><th>Size</th></tr></thead>
+    <table>
+        <thead><tr><th>Period</th><th>Num</th><th>Size</th></tr></thead>
         <tbody id="tbody"></tbody>
     </table>
 
     <script>
-        async function updateAccurate() {
-            const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+        async function fetchGame() {
+            // CodeTabs Proxy का उपयोग
+            const target = 'https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json';
+            const url = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target);
+            
             try {
                 const res = await fetch(url);
-                const json = await res.json();
+                const data = await res.json();
+                const list = data.data.list.sort((a,b) => b.issueNumber - a.issueNumber);
+                const last = list[0];
                 
-                // हमेशा सबसे नया डेटा ऊपर रखने के लिए सॉर्टिंग
-                const list = json.data.list.sort((a, b) => b.issueNumber - a.issueNumber);
-                const latest = list[0];
+                // Big/Small Logic
+                const num = parseInt(last.number);
+                const size = num >= 5 ? 'Big' : 'Small';
                 
                 document.getElementById('status').innerText = 'System Online';
-                document.getElementById('latest-period').innerText = 'Issue: ' + latest.issueNumber;
-                document.getElementById('latest-num').innerText = 'Result: ' + latest.number + ' (' + (parseInt(latest.number) >= 5 ? 'Big' : 'Small') + ')';
+                document.getElementById('issue').innerText = 'Issue: ' + last.issueNumber;
+                document.getElementById('prediction').innerText = 'Result: ' + num + ' (' + size + ')';
                 
-                const tbody = document.getElementById('tbody');
-                tbody.innerHTML = list.map(i => `
+                document.getElementById('tbody').innerHTML = list.map(i => `
                     <tr>
                         <td>${i.issueNumber.slice(-4)}</td>
                         <td>${i.number}</td>
-                        <td>${parseInt(i.number) >= 5 ? 'Big' : 'Small'}</td>
+                        <td class="${parseInt(i.number)>=5?'big':'small'}">${parseInt(i.number)>=5?'Big':'Small'}</td>
                     </tr>
                 `).join('');
-            } catch (err) {
-                document.getElementById('status').innerText = 'Error: CORS Extension ON करें!';
+            } catch(e) {
+                document.getElementById('status').innerText = 'Proxy Error: Refresh Page!';
             }
         }
-        // 2 सेकंड का रिफ्रेश रेट
-        setInterval(updateAccurate, 2000);
-        updateAccurate();
+        setInterval(fetchGame, 3000);
+        fetchGame();
     </script>
 </body>
 </html>
