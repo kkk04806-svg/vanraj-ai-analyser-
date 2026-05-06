@@ -2,59 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WinGo Smart Analyst</title>
+    <title>WinGo Big/Small Analyst</title>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
-        .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
-        .win-rate { font-size: 1.2em; color: #38bdf8; font-weight: bold; }
+        .card { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: center; border: 1px solid #38bdf8; }
+        .stat { font-size: 1.2em; font-weight: bold; margin: 5px 0; }
+        .big { color: #f59e0b; } .small { color: #8b5cf6; }
         table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
-        th, td { padding: 10px; border: 1px solid #334155; text-align: center; }
-        .red { color: #ef4444; } .green { color: #22c55e; }
+        th, td { padding: 8px; border: 1px solid #334155; text-align: center; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h3>Smart Trend Analyst</h3>
-        <div id="analysis" class="win-rate">Analyzing...</div>
+        <h3>Live Analyst (Big/Small)</h3>
+        <div id="analyst-output" class="stat">Analyzing data...</div>
     </div>
+    
     <table id="historyTable">
-        <thead><tr><th>Issue</th><th>No.</th><th>Color</th></tr></thead>
+        <thead><tr><th>Issue</th><th>No.</th><th>Result</th></tr></thead>
         <tbody id="tbody"></tbody>
     </table>
 
     <script>
-        async function analyzeData() {
-            // आपका दिया गया API URL
+        async function runAnalysis() {
             const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
-            
             try {
-                // सीधे डेटा फेच (CORS Proxy के साथ)
-                const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+                // सीधे फेच (CORS एक्सटेंशन ऑन रखें)
+                const res = await fetch(url);
                 const json = await res.json();
-                const data = JSON.parse(json.contents);
-                const list = data.data.list;
+                const list = json.data.list;
                 
-                // एनालिसिस लॉजिक
-                let redCount = 0, greenCount = 0;
+                let big = 0, small = 0;
                 list.slice(0, 10).forEach(i => {
-                    if(i.color.includes('red')) redCount++;
-                    if(i.color.includes('green')) greenCount++;
+                    const num = parseInt(i.number);
+                    if(num >= 5) big++; else small++;
                 });
+
+                document.getElementById('analyst-output').innerHTML = 
+                    `Big: ${big} | Small: ${small}<br>
+                    Next Prediction: ${big > small ? '<span class="big">Big</span>' : '<span class="small">Small</span>'}`;
                 
-                document.getElementById('analysis').innerHTML = 
-                    `Red: ${redCount} | Green: ${greenCount}<br> 
-                    Next Prediction: ${redCount > greenCount ? '<span class="green">Next: Green</span>' : '<span class="red">Next: Red</span>'}`;
-                
-                // टेबल अपडेट
                 document.getElementById('tbody').innerHTML = list.map(i => `
-                    <tr><td>${i.issueNumber.slice(-4)}</td><td>${i.number}</td><td class="${i.color.includes('red')?'red':'green'}">${i.color}</td></tr>
+                    <tr>
+                        <td>${i.issueNumber.slice(-4)}</td>
+                        <td>${i.number}</td>
+                        <td class="${parseInt(i.number)>=5?'big':'small'}">${parseInt(i.number)>=5?'Big':'Small'}</td>
+                    </tr>
                 `).join('');
             } catch (err) {
-                document.getElementById('analysis').innerText = "Error: Use Chrome Extension for CORS!";
+                document.getElementById('analyst-output').innerHTML = "CORS Error! Extention On करें!";
             }
         }
-        setInterval(analyzeData, 3000);
-        analyzeData();
+        setInterval(runAnalysis, 3000);
+        runAnalysis();
     </script>
 </body>
 </html>
