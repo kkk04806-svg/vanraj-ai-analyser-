@@ -2,225 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WinGo Next Period Analyzer</title>
+  <title>WinGo 30S Live - ar-lottery01</title>
   <style>
-    body {
-      margin: 0;
-      background: #0f172a;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 12px;
-    }
-    .container {
-      max-width: 520px;
-      margin: auto;
-    }
-    .status {
-      text-align: center;
-      color: #22c55e;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    .title {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 6px;
-    }
-    .period {
-      font-size: 20px;
-      font-weight: bold;
-      color: #38bdf8;
-      word-break: break-all;
-      margin-bottom: 10px;
-    }
-    .result {
-      font-size: 38px;
-      font-weight: bold;
-      margin: 6px 0;
-    }
-    .big {
-      color: #f59e0b;
-    }
-    .small {
-      color: #60a5fa;
-    }
-    .red {
-      color: #ef4444;
-    }
-    .green {
-      color: #22c55e;
-    }
-    .violet {
-      color: #a855f7;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .mini {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-    }
-    .mini h4 {
-      margin: 0 0 6px 0;
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: normal;
-    }
-    .mini .val {
-      font-size: 18px;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #1e293b;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-      border-bottom: 1px solid #334155;
-      font-size: 14px;
-    }
-    th {
-      background: #334155;
-    }
+    body { font-family: system-ui; text-align: center; padding: 20px; }
+    .box { margin: 10px auto; width: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+    .issue { font-size: 18px; font-weight: bold; }
+    .time { font-size: 14px; color: #555; }
+    .status { color: #d00; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="status" id="status">Connecting server...</div>
+  <h2>WinGo 30S - Current Issue</h2>
 
-    <div class="card">
-      <div class="title">NEXT PERIOD</div>
-      <div class="period" id="nextPeriod">Loading...</div>
-      <div class="title">LATEST RESULT</div>
-      <div class="result" id="latestResult">--</div>
-      <div id="latestMeta" style="font-size:14px;color:#cbd5e1;">--</div>
-    </div>
+  <div class="box">
+    <div>Previous: <span id="prevIssue" class="issue"></span></div>
+    <div class="time">From: <span id="prevStart"></span></div>
+    <div class="time">To: <span id="prevEnd"></span></div>
+  </div>
 
-    <div class="grid">
-      <div class="mini">
-        <h4>BIG / SMALL</h4>
-        <div class="val" id="bigSmall">--</div>
-      </div>
-      <div class="mini">
-        <h4>COLOR</h4>
-        <div class="val" id="colorText">--</div>
-      </div>
-      <div class="mini">
-        <h4>GREEN COUNT</h4>
-        <div class="val green" id="greenCount">0</div>
-      </div>
-      <div class="mini">
-        <h4>RED COUNT</h4>
-        <div class="val red" id="redCount">0</div>
-      </div>
-    </div>
+  <div class="box" style="background: #eef;">
+    <div>Current: <span id="currIssue" class="issue"></span></div>
+    <div>Status: <span id="status" class="status">Loading...</span></div>
+    <div class="time">From: <span id="currStart"></span></div>
+    <div class="time">To: <span id="currEnd"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="title">HISTORY</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Period</th>
-            <th>No.</th>
-            <th>Analysis</th>
-          </tr>
-        </thead>
-        <tbody id="historyBody"></tbody>
-      </table>
-    </div>
+  <div class="box">
+    <div>Next: <span id="nextIssue" class="issue"></span></div>
+    <div class="time">From: <span id="nextStart"></span></div>
+    <div class="time">To: <span id="nextEnd"></span></div>
   </div>
 
   <script>
-    function getNextIssue(issueNumber) {
-      const s = String(issueNumber);
-      const prefix = s.slice(0, -3);
-      const last3 = parseInt(s.slice(-3), 10);
-      return prefix + String(last3 + 1).padStart(3, "0");
+    const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetCurrentIssue.json";
+
+    function formatDate(ts) {
+      if (!ts) return "--";
+      const d = new Date(ts);
+      return `${d.toLocaleTimeString()} (IST)`;
     }
 
-    async function loadData() {
-      const api = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=" + Date.now();
-      const proxy = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(api);
+    function updateUI(data) {
+      const { previous, current, next } = data;
 
-      try {
-        const res = await fetch(proxy);
-        const json = await res.json();
-        const list = json.data.list || [];
+      document.getElementById("prevIssue").textContent = previous?.issueNumber || "-";
+      document.getElementById("prevStart").textContent = formatDate(previous?.startTime);
+      document.getElementById("prevEnd").textContent = formatDate(previous?.endTime);
 
-        if (!list.length) {
-          document.getElementById("status").innerText = "No data received";
-          return;
-        }
+      document.getElementById("currIssue").textContent = current?.issueNumber || "-";
+      document.getElementById("currStart").textContent = formatDate(current?.startTime);
+      document.getElementById("currEnd").textContent = formatDate(current?.endTime);
 
-        list.sort((a, b) => b.issueNumber.localeCompare(a.issueNumber));
-        const latest = list[0];
+      document.getElementById("nextIssue").textContent = next?.issueNumber || "-";
+      document.getElementById("nextStart").textContent = formatDate(next?.startTime);
+      document.getElementById("nextEnd").textContent = formatDate(next?.endTime);
 
-        const num = parseInt(latest.number, 10);
-        const bigSmall = num >= 5 ? "Big" : "Small";
-        const color = latest.color || "";
-        const colorClass = color.includes("green") ? "green" : color.includes("red") ? "red" : "violet";
-
-        document.getElementById("status").innerText = "Server connected";
-        document.getElementById("nextPeriod").innerText = getNextIssue(latest.issueNumber);
-        document.getElementById("latestResult").innerText = latest.number;
-        document.getElementById("latestResult").className = "result " + colorClass;
-        document.getElementById("latestMeta").innerText = "Current Issue: " + latest.issueNumber + " | Color: " + color + " | Premium: " + latest.premium;
-
-        document.getElementById("bigSmall").innerText = bigSmall;
-        document.getElementById("bigSmall").className = "val " + (bigSmall === "Big" ? "big" : "small");
-        document.getElementById("colorText").innerText = color;
-        document.getElementById("colorText").className = "val " + colorClass;
-
-        let green = 0, red = 0;
-        list.slice(0, 10).forEach(item => {
-          if ((item.color || "").includes("green")) green++;
-          if ((item.color || "").includes("red")) red++;
-        });
-
-        document.getElementById("greenCount").innerText = green;
-        document.getElementById("redCount").innerText = red;
-
-        document.getElementById("historyBody").innerHTML = list.slice(0, 10).map(item => {
-          const n = parseInt(item.number, 10);
-          const bs = n >= 5 ? "Big" : "Small";
-          const cls = item.color.includes("green") ? "green" : item.color.includes("red") ? "red" : "violet";
-          return `
-            <tr>
-              <td>${item.issueNumber}</td>
-              <td class="${cls}">${item.number}</td>
-              <td class="${cls}">${item.color} / ${bs}</td>
-            </tr>
-          `;
-        }).join("");
-
-      } catch (e) {
-        document.getElementById("status").innerText = "Connection failed";
-        document.getElementById("nextPeriod").innerText = "Loading...";
-        document.getElementById("latestResult").innerText = "--";
+      const now = Date.now();
+      if (current?.startTime && current?.endTime) {
+        if (now < current.startTime) document.getElementById("status").textContent = "Before start";
+        else if (now >= current.startTime && now <= current.endTime) document.getElementById("status").textContent = "Active / Running";
+        else document.getElementById("status").textContent = "Done / Closed";
+      } else {
+        document.getElementById("status").textContent = "No data";
       }
     }
 
-    loadData();
-    setInterval(loadData, 3000);
+    async function load() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {
+        document.getElementById("status").textContent = "Error: " + err.message;
+        console.error(err);
+      }
+    }
+
+    load();
+    setInterval(load, 5000); // har 5 sec pe refresh
   </script>
 </body>
 </html>
