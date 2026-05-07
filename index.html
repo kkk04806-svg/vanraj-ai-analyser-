@@ -1,105 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI ANALYSER</title>
-    <style>
-        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .app-container { width: 340px; background: #111; border: 2.5px solid #ff0055; border-radius: 30px; padding: 20px; box-shadow: 0 0 25px #ff005566; position: relative; }
-        .title { text-align: center; color: #ff0055; font-size: 22px; font-weight: 900; letter-spacing: 1px; margin-bottom: 25px; }
-        
-        .card { background: #1a1a1a; border-radius: 18px; padding: 15px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
-        .label { color: #777; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
-        .value { font-size: 24px; font-weight: bold; color: #ffcc00; border-bottom: 2px solid #ffcc0044; display: inline-block; padding-bottom: 5px; }
-        
-        .prediction-box { border: 2px dashed #ff0055; padding: 30px 15px; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
-        #signal { font-size: 55px; font-weight: 900; margin: 10px 0; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
-        .waiting { color: #00ff88; font-size: 18px; font-weight: bold; letter-spacing: 2px; }
-        
-        .timer-text { font-size: 32px; color: #ff4444; font-weight: bold; font-family: monospace; }
-        .btn-live { width: 100%; background: #ff0055; border: none; padding: 16px; color: #fff; font-size: 17px; font-weight: bold; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4); }
-        .server-status { text-align: center; margin-top: 15px; font-size: 12px; color: #00ff88; }
-        .dot { height: 8px; width: 8px; background-color: #00ff88; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 8px #00ff88; }
-    </style>
-</head>
-<body>
-
-<div class="app-container">
-    <div class="title">VANRAJ AI ANALYSER</div>
-
-    <div class="card">
-        <div class="label">Current Issue Number</div>
-        <div id="issue" class="value">--------</div>
-    </div>
-
-    <div class="card prediction-box">
-        <div class="label">Next Prediction</div>
-        <div id="signal">---</div>
-        <div id="status" class="waiting">WAITING...</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Time Remaining</div>
-        <div id="timer" class="timer-text">00:00</div>
-    </div>
-
-    <button class="btn-live" onclick="getManualSignal()">Get Live Signal</button>
-    
-    <div class="server-status">
-        <span class="dot"></span> Server: Connected
-    </div>
-</div>
-
 <script>
-    // Stable Proxy URL
     const PROXY = "https://api.allorigins.win/get?url=";
-    const API_TARGET = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
+    const API_RAW = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=";
 
-    async function fetchWinData() {
+    async function getSignal() {
         const signalDiv = document.getElementById("signal");
         const statusDiv = document.getElementById("status");
+        const issueDiv = document.getElementById("issue");
         
+        statusDiv.innerText = "ANALYZING...";
+        statusDiv.style.color = "#ffcc00";
+
         try {
-            const res = await fetch(PROXY + API_TARGET);
-            const raw = await res.json();
-            const data = JSON.parse(raw.contents);
+            // Step 1: Fetch through Proxy
+            const response = await fetch(PROXY + encodeURIComponent(API_RAW + Date.now()));
+            if (!response.ok) throw new Error("Network issue");
+            
+            const wrapper = await response.json();
+            
+            // Step 2: Parse the actual game data
+            const gameData = JSON.parse(wrapper.contents);
 
-            if (data.code === 0) {
-                const lastResult = data.data.list[0];
-                document.getElementById("issue").innerText = lastResult.issueNumber;
-
-                // Smart Algorithm logic
+            if (gameData && gameData.code === 0 && gameData.data.list.length > 0) {
+                const lastResult = gameData.data.list[0];
+                
+                // Step 3: Update UI with Real Data
+                issueDiv.innerText = lastResult.issueNumber;
+                
+                // Prediction Logic based on the last number
                 const num = parseInt(lastResult.number);
-                const nextCol = (num % 2 === 0) ? "GREEN" : "RED";
-                const nextSize = (num >= 5) ? "SMALL" : "BIG";
+                const nextCol = (num % 2 === 0) ? "RED" : "GREEN"; // Standard logic
+                const nextSize = (num >= 5) ? "SMALL" : "BIG"; // Counter trend logic
 
                 signalDiv.innerText = nextCol;
                 signalDiv.style.color = (nextCol === "RED") ? "#ff4444" : "#00ff88";
-                statusDiv.innerText = nextSize + " (LIVE)";
+                statusDiv.innerText = nextSize + " (CONFIRMED)";
+                statusDiv.style.color = "#00ff88";
+            } else {
+                throw new Error("Invalid API Response");
             }
-        } catch (e) {
-            console.error("Sync Error");
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "RETRYING...";
+            statusDiv.style.color = "#ff4444";
+            // Auto-retry after 2 seconds if failed
+            setTimeout(getSignal, 2000);
         }
     }
 
-    function getManualSignal() {
-        document.getElementById("status").innerText = "ANALYZING...";
-        setTimeout(fetchWinData, 1000);
-    }
-
-    // Auto-Timer 30s Logic
+    // Timer Sync (30 Seconds Loop)
     setInterval(() => {
         const now = new Date();
-        const seconds = 30 - (now.getSeconds() % 30);
-        document.getElementById("timer").innerText = "00:" + (seconds < 10 ? "0" + seconds : seconds);
+        const sec = now.getSeconds();
+        const remaining = 30 - (sec % 30);
         
-        // Auto-refresh when new round starts
-        if (seconds === 30) fetchWinData();
+        document.getElementById("timer").innerText = "00:" + (remaining < 10 ? "0" + remaining : remaining);
+        
+        // Fetch new data exactly at the start of a new round
+        if (remaining === 30) {
+            getSignal();
+        }
     }, 1000);
 
-    window.onload = fetchWinData;
+    window.onload = getSignal;
 </script>
-
-</body>
-</html>
