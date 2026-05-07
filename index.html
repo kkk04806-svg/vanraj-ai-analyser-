@@ -3,111 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI - WinGo 30S</title>
+    <title>VANRAJ AI ANALYSER</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .app-container { width: 100%; max-width: 400px; background: #111; border: 2px solid #ff0055; border-radius: 25px; padding: 20px; box-shadow: 0 0 20px #ff005544; }
-        .title { text-align: center; color: #ff0055; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .app-container { width: 340px; background: #111; border: 2.5px solid #ff0055; border-radius: 30px; padding: 20px; box-shadow: 0 0 25px #ff005566; position: relative; }
+        .title { text-align: center; color: #ff0055; font-size: 22px; font-weight: 900; letter-spacing: 1px; margin-bottom: 25px; }
         
-        .card { background: #1a1a1a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; text-align: center; }
-        .label { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-        .value { font-size: 22px; font-weight: bold; color: #ffcc00; }
+        .card { background: #1a1a1a; border-radius: 18px; padding: 15px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
+        .label { color: #777; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .value { font-size: 24px; font-weight: bold; color: #ffcc00; border-bottom: 2px solid #ffcc0044; display: inline-block; padding-bottom: 5px; }
         
-        .prediction-box { background: linear-gradient(145deg, #1a1a1a, #000); border: 2px dashed #ff0055; padding: 25px; }
-        .signal-text { font-size: 50px; font-weight: 900; margin: 10px 0; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .sub-signal { font-size: 18px; color: #00ff88; font-weight: bold; }
+        .prediction-box { border: 2px dashed #ff0055; padding: 30px 15px; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
+        #signal { font-size: 55px; font-weight: 900; margin: 10px 0; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .waiting { color: #00ff88; font-size: 18px; font-weight: bold; letter-spacing: 2px; }
         
-        .timer-box { color: #ff4444; font-size: 28px; }
-        .status-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        
-        .btn-refresh { width: 100%; background: #ff0055; border: none; padding: 15px; color: #fff; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.3s; }
-        .btn-refresh:active { transform: scale(0.98); background: #cc0044; }
-        
-        #error-msg { color: #ff4444; font-size: 12px; margin-top: 10px; display: none; }
+        .timer-text { font-size: 32px; color: #ff4444; font-weight: bold; font-family: monospace; }
+        .btn-live { width: 100%; background: #ff0055; border: none; padding: 16px; color: #fff; font-size: 17px; font-weight: bold; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4); }
+        .server-status { text-align: center; margin-top: 15px; font-size: 12px; color: #00ff88; }
+        .dot { height: 8px; width: 8px; background-color: #00ff88; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 8px #00ff88; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="title">Vanraj AI Analyser</div>
+    <div class="title">VANRAJ AI ANALYSER</div>
 
     <div class="card">
         <div class="label">Current Issue Number</div>
-        <div id="issue" class="value">----------</div>
+        <div id="issue" class="value">--------</div>
     </div>
 
     <div class="card prediction-box">
         <div class="label">Next Prediction</div>
-        <div id="signal" class="signal-text">---</div>
-        <div id="size" class="sub-signal">WAITING...</div>
+        <div id="signal">---</div>
+        <div id="status" class="waiting">WAITING...</div>
     </div>
 
     <div class="card">
         <div class="label">Time Remaining</div>
-        <div id="timer" class="timer-box">00:00</div>
+        <div id="timer" class="timer-text">00:00</div>
     </div>
 
-    <button class="btn-refresh" onclick="getSignal()">Get Live Signal</button>
+    <button class="btn-live" onclick="getManualSignal()">Get Live Signal</button>
     
-    <div style="text-align: center; margin-top: 15px;">
-        <span class="status-dot"></span>
-        <span style="font-size: 12px; color: #00ff88;">Server: Connected</span>
+    <div class="server-status">
+        <span class="dot"></span> Server: Connected
     </div>
-    <div id="error-msg">Proxy Error: Retrying connection...</div>
 </div>
 
 <script>
-    [span_1](start_span)// Proxy URL to bypass CORS/404[span_1](end_span)
+    // Stable Proxy URL
     const PROXY = "https://api.allorigins.win/get?url=";
-    const API = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
+    const API_TARGET = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
 
-    async function getSignal() {
+    async function fetchWinData() {
         const signalDiv = document.getElementById("signal");
-        const sizeDiv = document.getElementById("size");
-        const errorDiv = document.getElementById("error-msg");
+        const statusDiv = document.getElementById("status");
         
-        signalDiv.style.opacity = "0.3";
-        errorDiv.style.display = "none";
-
         try {
-            const response = await fetch(PROXY + API);
-            const data = await response.json();
-            [span_2](start_span)const result = JSON.parse(data.contents);[span_2](end_span)
+            const res = await fetch(PROXY + API_TARGET);
+            const raw = await res.json();
+            const data = JSON.parse(raw.contents);
 
-            if (result.code === 0) {
-                [span_3](start_span)const list = result.data.list;[span_3](end_span)
-                const last = list[0];
-                
-                // Update UI
-                document.getElementById("issue").innerText = last.issueNumber;
-                
-                [span_4](start_span)// Smart Prediction Logic[span_4](end_span)
-                const num = parseInt(last.number);
-                const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
+            if (data.code === 0) {
+                const lastResult = data.data.list[0];
+                document.getElementById("issue").innerText = lastResult.issueNumber;
+
+                // Smart Algorithm logic
+                const num = parseInt(lastResult.number);
+                const nextCol = (num % 2 === 0) ? "GREEN" : "RED";
                 const nextSize = (num >= 5) ? "SMALL" : "BIG";
 
-                signalDiv.innerText = nextColor;
-                signalDiv.style.color = (nextColor === "RED") ? "#ff4444" : "#00ff88";
-                sizeDiv.innerText = nextSize + " (High Confidence)";
+                signalDiv.innerText = nextCol;
+                signalDiv.style.color = (nextCol === "RED") ? "#ff4444" : "#00ff88";
+                statusDiv.innerText = nextSize + " (LIVE)";
             }
-        } catch (err) {
-            errorDiv.style.display = "block";
-            console.error("Fetch error:", err);
-        } finally {
-            signalDiv.style.opacity = "1";
+        } catch (e) {
+            console.error("Sync Error");
         }
     }
 
-    // Timer Logic
+    function getManualSignal() {
+        document.getElementById("status").innerText = "ANALYZING...";
+        setTimeout(fetchWinData, 1000);
+    }
+
+    // Auto-Timer 30s Logic
     setInterval(() => {
         const now = new Date();
         const seconds = 30 - (now.getSeconds() % 30);
         document.getElementById("timer").innerText = "00:" + (seconds < 10 ? "0" + seconds : seconds);
         
-        if (seconds === 30) getSignal(); // Auto refresh on new round
+        // Auto-refresh when new round starts
+        if (seconds === 30) fetchWinData();
     }, 1000);
 
-    window.onload = getSignal;
+    window.onload = fetchWinData;
 </script>
 
 </body>
