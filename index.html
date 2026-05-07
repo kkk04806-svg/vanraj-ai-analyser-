@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WinGo 30S - 1 Number + Analyst</title>
+  <title>WinGo 30S +1 Number Analyst</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -33,7 +33,7 @@
       background: #eee;
     }
     .reds { color: maroon; font-weight: bold; }
-    .greens { color: green; font-weight: bold; }
+    .greens { color: green; }
     .violet { color: #8a2be2; }
     .analysis {
       margin-top: 20px;
@@ -50,9 +50,10 @@
 </head>
 <body>
   <div class="container">
-    <h2>WinGo 30S - Last 10 Numbers (1 Number)</h2>
+    <h2>WinGo 30S - Last 10 +1 Number Analyst</h2>
     <div class="status">Fetching data...</div>
 
+    <h3>Last 10 Results (1st shown)</h3>
     <div class="results">
       <table>
         <thead>
@@ -60,7 +61,7 @@
             <th>Issue</th>
             <th>Number</th>
             <th>Color</th>
-            <th>Premium</th>
+            <th>+1 Number</th>
           </tr>
         </thead>
         <tbody id="list"></tbody>
@@ -68,11 +69,12 @@
     </div>
 
     <div class="analysis">
-      <h3>Simple 1 Number Analyst</h3>
+      <h3>+1 Number & Color Analyst</h3>
       <div id="stats">
-        Red: <span class="reds" id="redCount">0</span> |
-        Green: <span class="greens" id="greenCount">0</span> |
-        Violet: <span class="violet" id="violetCount">0</span>
+        <b>Red streak:</b> <span id="redStreak">0</span> |
+        <b>Green streak:</b> <span id="greenStreak">0</span> |
+        <b>Has 0/5 (violet):</b> <span id="violetStreak">0</span><br>
+        <b>Last +1 color trend:</b> <span id="trend">—</span>
       </div>
     </div>
   </div>
@@ -84,32 +86,55 @@
       const tbody = document.getElementById("list");
       tbody.innerHTML = "";
 
-      items.forEach(item => {
+      // +1 number: next record ka number
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const next = items[i + 1] || { number: "—" };
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${item.issueNumber}</td>
           <td>${item.number}</td>
-          <td class="${item.color.includes('red') ? 'reds' : item.color.includes('green') ? 'greens' : item.color.includes('violet') ? 'violet' : ''}">
+          <td class="${
+            item.color.includes("red") ? "reds" :
+            item.color.includes("green") ? "greens" : "violet"
+          }">
             ${item.color}
           </td>
-          <td>${item.premium}</td>
+          <td>${next.number}</td>
         `;
         tbody.appendChild(tr);
-      });
+      }
     }
 
     function analyzeColors(items) {
-      let red = 0, green = 0, violet = 0;
+      let lastColor = null;
+      let r = 0, g = 0, v = 0;
+      let streaks = [];
 
       items.forEach(item => {
-        if (item.color.includes("red")) red++;
-        if (item.color.includes("green")) green++;
-        if (item.color.includes("violet")) violet++;
+        let color = "";
+        if (item.color.includes("red")) color = "red";
+        else if (item.color.includes("green")) color = "green";
+        else if (item.color.includes("violet")) color = "violet";
+
+        streaks.push(color);
+
+        if (color === "red") r++;
+        if (color === "green") g++;
+        if (color === "violet") v++;
       });
 
-      document.getElementById("redCount").textContent = red;
-      document.getElementById("greenCount").textContent = green;
-      document.getElementById("violetCount").textContent = violet;
+      // Last 3 ke hisaab se simple trend
+      const recent = streaks.slice(-3).join(" → ");
+      const rStreak = streaks.filter(c => c === "red").length;
+      const gStreak = streaks.filter(c => c === "green").length;
+      const vStreak = streaks.filter(c => c === "violet").length;
+
+      document.getElementById("redStreak").textContent = rStreak;
+      document.getElementById("greenStreak").textContent = gStreak;
+      document.getElementById("violetStreak").textContent = vStreak;
+      document.getElementById("trend").textContent = recent || "no data";
     }
 
     async function load() {
@@ -123,7 +148,7 @@
           return;
         }
 
-        const list = data.data.list;
+        const list = data.data.list; // last 10 +1
 
         renderList(list);
         analyzeColors(list);
@@ -134,10 +159,8 @@
       }
     }
 
-    // First load
     load();
-
-    // Auto refresh every 5 seconds
+    // Every 5 seconds refresh
     setInterval(load, 5000);
   </script>
 </body>
