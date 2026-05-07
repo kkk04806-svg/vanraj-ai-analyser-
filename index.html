@@ -1,86 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>WinGo 30S Live - ar-lottery01</title>
-  <style>
-    body { font-family: system-ui; text-align: center; padding: 20px; }
-    .box { margin: 10px auto; width: 300px; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
-    .issue { font-size: 18px; font-weight: bold; }
-    .time { font-size: 14px; color: #555; }
-    .status { color: #d00; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VANRAJ AI - WinGo Predictor</title>
+    <style>
+        body { background-color: #0b0b0b; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 350px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 2px solid #e91e63; text-align: center; box-shadow: 0 0 20px rgba(233, 30, 99, 0.2); }
+        .header { font-size: 18px; font-weight: bold; color: #e91e63; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .box { background: #252525; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        .label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .issue { font-size: 20px; font-weight: bold; color: #ffeb3b; }
+        
+        .prediction-area { margin: 20px 0; padding: 20px; background: #222; border-radius: 15px; border: 1px dashed #e91e63; }
+        .signal { font-size: 45px; font-weight: 900; margin: 10px 0; transition: 0.5s; }
+        .color-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        
+        .status { font-size: 12px; color: #00ff41; margin-top: 10px; }
+        .btn { background: #e91e63; border: none; padding: 15px; color: white; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .loading-bar { width: 100%; height: 4px; background: #333; margin-top: 15px; border-radius: 2px; overflow: hidden; display: none; }
+        .progress { width: 0%; height: 100%; background: #00ff41; transition: width 2s linear; }
+    </style>
 </head>
 <body>
-  <h2>WinGo 30S - Current Issue</h2>
 
-  <div class="box">
-    <div>Previous: <span id="prevIssue" class="issue"></span></div>
-    <div class="time">From: <span id="prevStart"></span></div>
-    <div class="time">To: <span id="prevEnd"></span></div>
-  </div>
+<div class="container">
+    <div class="header">Vanraj AI Analyser</div>
 
-  <div class="box" style="background: #eef;">
-    <div>Current: <span id="currIssue" class="issue"></span></div>
-    <div>Status: <span id="status" class="status">Loading...</span></div>
-    <div class="time">From: <span id="currStart"></span></div>
-    <div class="time">To: <span id="currEnd"></span></div>
-  </div>
+    <div class="box">
+        <div class="label">CURRENT ISSUE</div>
+        <div id="currIssue" class="issue">Loading...</div>
+    </div>
 
-  <div class="box">
-    <div>Next: <span id="nextIssue" class="issue"></span></div>
-    <div class="time">From: <span id="nextStart"></span></div>
-    <div class="time">To: <span id="nextEnd"></span></div>
-  </div>
+    <div class="prediction-area">
+        <div class="label">NEXT PREDICTION</div>
+        <div id="signal" class="signal">---</div>
+        <div id="sizePredict" style="font-size: 18px; font-weight: bold; color: #aaa;">ANALYSING...</div>
+    </div>
 
-  <script>
-    const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetCurrentIssue.json";
+    <div class="box">
+        <div class="label">TIME REMAINING</div>
+        <div id="timer" class="issue" style="color: #f44336;">00:30</div>
+    </div>
 
-    function formatDate(ts) {
-      if (!ts) return "--";
-      const d = new Date(ts);
-      return `${d.toLocaleTimeString()} (IST)`;
+    <div class="loading-bar" id="loader"><div class="progress" id="bar"></div></div>
+    
+    <div class="status" id="status">System: Syncing with Server...</div>
+    <button class="btn" onclick="manualRefresh()">GET MANUAL SIGNAL</button>
+</div>
+
+<script>
+    // Proxy URL use kar rahe hain taaki 404/CORS error na aaye
+    const PROXY = "https://api.allorigins.win/get?url=";
+    const API_URL = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
+
+    async function fetchData() {
+        try {
+            const res = await fetch(PROXY + API_URL);
+            const rawData = await res.json();
+            const data = JSON.parse(rawData.contents);
+            
+            if(data.code === 0) {
+                updatePredictor(data.data.list);
+            }
+        } catch (err) {
+            document.getElementById("status").textContent = "Error: Use a Proxy or Backend";
+            document.getElementById("status").style.color = "red";
+        }
     }
 
-    function updateUI(data) {
-      const { previous, current, next } = data;
+    function updatePredictor(list) {
+        const lastGame = list[0];
+        const lastNumbers = list.slice(0, 3).map(x => parseInt(x.number));
+        
+        // Update Issue
+        document.getElementById("currIssue").textContent = lastGame.issueNumber;
 
-      document.getElementById("prevIssue").textContent = previous?.issueNumber || "-";
-      document.getElementById("prevStart").textContent = formatDate(previous?.startTime);
-      document.getElementById("prevEnd").textContent = formatDate(previous?.endTime);
+        // Prediction Logic (Pattern based)
+        const sum = lastNumbers.reduce((a, b) => a + b, 0);
+        const isBig = sum > 13;
+        const color = (sum % 2 === 0) ? "RED" : "GREEN";
 
-      document.getElementById("currIssue").textContent = current?.issueNumber || "-";
-      document.getElementById("currStart").textContent = formatDate(current?.startTime);
-      document.getElementById("currEnd").textContent = formatDate(current?.endTime);
-
-      document.getElementById("nextIssue").textContent = next?.issueNumber || "-";
-      document.getElementById("nextStart").textContent = formatDate(next?.startTime);
-      document.getElementById("nextEnd").textContent = formatDate(next?.endTime);
-
-      const now = Date.now();
-      if (current?.startTime && current?.endTime) {
-        if (now < current.startTime) document.getElementById("status").textContent = "Before start";
-        else if (now >= current.startTime && now <= current.endTime) document.getElementById("status").textContent = "Active / Running";
-        else document.getElementById("status").textContent = "Done / Closed";
-      } else {
-        document.getElementById("status").textContent = "No data";
-      }
+        // UI Update
+        const signalDiv = document.getElementById("signal");
+        signalDiv.textContent = color;
+        signalDiv.style.color = (color === "RED") ? "#f44336" : "#00ff41";
+        
+        document.getElementById("sizePredict").textContent = isBig ? "BIG" : "SMALL";
+        document.getElementById("status").textContent = "System: Data Synced ✅";
     }
 
-    async function load() {
-      try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        updateUI(data);
-      } catch (err) {
-        document.getElementById("status").textContent = "Error: " + err.message;
-        console.error(err);
-      }
+    function manualRefresh() {
+        const loader = document.getElementById("loader");
+        const bar = document.getElementById("bar");
+        loader.style.display = "block";
+        bar.style.width = "0%";
+        
+        setTimeout(() => { bar.style.width = "100%"; }, 10);
+        
+        setTimeout(() => {
+            fetchData();
+            loader.style.display = "none";
+        }, 2000);
     }
 
-    load();
-    setInterval(load, 5000); // har 5 sec pe refresh
-  </script>
+    // Auto Refresh every 30 seconds
+    setInterval(fetchData, 30000);
+    window.onload = fetchData;
+
+    // Simple Countdown Timer
+    setInterval(() => {
+        let now = new Date();
+        let sec = 30 - (now.getSeconds() % 30);
+        document.getElementById("timer").textContent = "00:" + (sec < 10 ? "0" + sec : sec);
+        if(sec === 30) fetchData();
+    }, 1000);
+</script>
+
 </body>
 </html>
