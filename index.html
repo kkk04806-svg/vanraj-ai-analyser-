@@ -1,65 +1,144 @@
-<script>
-    const PROXY = "https://api.allorigins.win/get?url=";
-    const API_RAW = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WinGo 30S - 1 Number + Analyst</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 20px;
+      background: #f8f8f8;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    .results {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    .reds { color: maroon; font-weight: bold; }
+    .greens { color: green; font-weight: bold; }
+    .violet { color: #8a2be2; }
+    .analysis {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background: #f0f8ff;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .status {
+      margin-bottom: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>WinGo 30S - Last 10 Numbers (1 Number)</h2>
+    <div class="status">Fetching data...</div>
 
-    async function getSignal() {
-        const signalDiv = document.getElementById("signal");
-        const statusDiv = document.getElementById("status");
-        const issueDiv = document.getElementById("issue");
-        
-        statusDiv.innerText = "ANALYZING...";
-        statusDiv.style.color = "#ffcc00";
+    <div class="results">
+      <table>
+        <thead>
+          <tr>
+            <th>Issue</th>
+            <th>Number</th>
+            <th>Color</th>
+            <th>Premium</th>
+          </tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
 
-        try {
-            // Step 1: Fetch through Proxy
-            const response = await fetch(PROXY + encodeURIComponent(API_RAW + Date.now()));
-            if (!response.ok) throw new Error("Network issue");
-            
-            const wrapper = await response.json();
-            
-            // Step 2: Parse the actual game data
-            const gameData = JSON.parse(wrapper.contents);
+    <div class="analysis">
+      <h3>Simple 1 Number Analyst</h3>
+      <div id="stats">
+        Red: <span class="reds" id="redCount">0</span> |
+        Green: <span class="greens" id="greenCount">0</span> |
+        Violet: <span class="violet" id="violetCount">0</span>
+      </div>
+    </div>
+  </div>
 
-            if (gameData && gameData.code === 0 && gameData.data.list.length > 0) {
-                const lastResult = gameData.data.list[0];
-                
-                // Step 3: Update UI with Real Data
-                issueDiv.innerText = lastResult.issueNumber;
-                
-                // Prediction Logic based on the last number
-                const num = parseInt(lastResult.number);
-                const nextCol = (num % 2 === 0) ? "RED" : "GREEN"; // Standard logic
-                const nextSize = (num >= 5) ? "SMALL" : "BIG"; // Counter trend logic
+  <script>
+    const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-                signalDiv.innerText = nextCol;
-                signalDiv.style.color = (nextCol === "RED") ? "#ff4444" : "#00ff88";
-                statusDiv.innerText = nextSize + " (CONFIRMED)";
-                statusDiv.style.color = "#00ff88";
-            } else {
-                throw new Error("Invalid API Response");
-            }
-        } catch (err) {
-            console.error(err);
-            statusDiv.innerText = "RETRYING...";
-            statusDiv.style.color = "#ff4444";
-            // Auto-retry after 2 seconds if failed
-            setTimeout(getSignal, 2000);
-        }
+    function renderList(items) {
+      const tbody = document.getElementById("list");
+      tbody.innerHTML = "";
+
+      items.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.issueNumber}</td>
+          <td>${item.number}</td>
+          <td class="${item.color.includes('red') ? 'reds' : item.color.includes('green') ? 'greens' : item.color.includes('violet') ? 'violet' : ''}">
+            ${item.color}
+          </td>
+          <td>${item.premium}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    // Timer Sync (30 Seconds Loop)
-    setInterval(() => {
-        const now = new Date();
-        const sec = now.getSeconds();
-        const remaining = 30 - (sec % 30);
-        
-        document.getElementById("timer").innerText = "00:" + (remaining < 10 ? "0" + remaining : remaining);
-        
-        // Fetch new data exactly at the start of a new round
-        if (remaining === 30) {
-            getSignal();
-        }
-    }, 1000);
+    function analyzeColors(items) {
+      let red = 0, green = 0, violet = 0;
 
-    window.onload = getSignal;
-</script>
+      items.forEach(item => {
+        if (item.color.includes("red")) red++;
+        if (item.color.includes("green")) green++;
+        if (item.color.includes("violet")) violet++;
+      });
+
+      document.getElementById("redCount").textContent = red;
+      document.getElementById("greenCount").textContent = green;
+      document.getElementById("violetCount").textContent = violet;
+    }
+
+    async function load() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data.data || !data.data.list) {
+          document.querySelector(".status").textContent = "Invalid response";
+          return;
+        }
+
+        const list = data.data.list;
+
+        renderList(list);
+        analyzeColors(list);
+        document.querySelector(".status").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        document.querySelector(".status").textContent = "Error: " + err.message;
+        console.error(err);
+      }
+    }
+
+    // First load
+    load();
+
+    // Auto refresh every 5 seconds
+    setInterval(load, 5000);
+  </script>
+</body>
+</html>
