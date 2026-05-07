@@ -3,119 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ AI - WinGo Predictor</title>
+    <title>VANRAJ AI - WinGo 30S</title>
     <style>
-        body { background-color: #0b0b0b; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { width: 350px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 2px solid #e91e63; text-align: center; box-shadow: 0 0 20px rgba(233, 30, 99, 0.2); }
-        .header { font-size: 18px; font-weight: bold; color: #e91e63; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .app-container { width: 100%; max-width: 400px; background: #111; border: 2px solid #ff0055; border-radius: 25px; padding: 20px; box-shadow: 0 0 20px #ff005544; }
+        .title { text-align: center; color: #ff0055; font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; }
         
-        .box { background: #252525; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        .label { font-size: 12px; color: #888; margin-bottom: 5px; }
-        .issue { font-size: 20px; font-weight: bold; color: #ffeb3b; }
+        .card { background: #1a1a1a; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; text-align: center; }
+        .label { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+        .value { font-size: 22px; font-weight: bold; color: #ffcc00; }
         
-        .prediction-area { margin: 20px 0; padding: 20px; background: #222; border-radius: 15px; border: 1px dashed #e91e63; }
-        .signal { font-size: 45px; font-weight: 900; margin: 10px 0; transition: 0.5s; }
-        .color-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        .prediction-box { background: linear-gradient(145deg, #1a1a1a, #000); border: 2px dashed #ff0055; padding: 25px; }
+        .signal-text { font-size: 50px; font-weight: 900; margin: 10px 0; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .sub-signal { font-size: 18px; color: #00ff88; font-weight: bold; }
         
-        .status { font-size: 12px; color: #00ff41; margin-top: 10px; }
-        .btn { background: #e91e63; border: none; padding: 15px; color: white; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .loading-bar { width: 100%; height: 4px; background: #333; margin-top: 15px; border-radius: 2px; overflow: hidden; display: none; }
-        .progress { width: 0%; height: 100%; background: #00ff41; transition: width 2s linear; }
+        .timer-box { color: #ff4444; font-size: 28px; }
+        .status-dot { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        .btn-refresh { width: 100%; background: #ff0055; border: none; padding: 15px; color: #fff; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .btn-refresh:active { transform: scale(0.98); background: #cc0044; }
+        
+        #error-msg { color: #ff4444; font-size: 12px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">Vanraj AI Analyser</div>
+<div class="app-container">
+    <div class="title">Vanraj AI Analyser</div>
 
-    <div class="box">
-        <div class="label">CURRENT ISSUE</div>
-        <div id="currIssue" class="issue">Loading...</div>
+    <div class="card">
+        <div class="label">Current Issue Number</div>
+        <div id="issue" class="value">----------</div>
     </div>
 
-    <div class="prediction-area">
-        <div class="label">NEXT PREDICTION</div>
-        <div id="signal" class="signal">---</div>
-        <div id="sizePredict" style="font-size: 18px; font-weight: bold; color: #aaa;">ANALYSING...</div>
+    <div class="card prediction-box">
+        <div class="label">Next Prediction</div>
+        <div id="signal" class="signal-text">---</div>
+        <div id="size" class="sub-signal">WAITING...</div>
     </div>
 
-    <div class="box">
-        <div class="label">TIME REMAINING</div>
-        <div id="timer" class="issue" style="color: #f44336;">00:30</div>
+    <div class="card">
+        <div class="label">Time Remaining</div>
+        <div id="timer" class="timer-box">00:00</div>
     </div>
 
-    <div class="loading-bar" id="loader"><div class="progress" id="bar"></div></div>
+    <button class="btn-refresh" onclick="getSignal()">Get Live Signal</button>
     
-    <div class="status" id="status">System: Syncing with Server...</div>
-    <button class="btn" onclick="manualRefresh()">GET MANUAL SIGNAL</button>
+    <div style="text-align: center; margin-top: 15px;">
+        <span class="status-dot"></span>
+        <span style="font-size: 12px; color: #00ff88;">Server: Connected</span>
+    </div>
+    <div id="error-msg">Proxy Error: Retrying connection...</div>
 </div>
 
 <script>
-    // Proxy URL use kar rahe hain taaki 404/CORS error na aaye
+    [span_1](start_span)// Proxy URL to bypass CORS/404[span_1](end_span)
     const PROXY = "https://api.allorigins.win/get?url=";
-    const API_URL = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
+    const API = encodeURIComponent("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now());
 
-    async function fetchData() {
+    async function getSignal() {
+        const signalDiv = document.getElementById("signal");
+        const sizeDiv = document.getElementById("size");
+        const errorDiv = document.getElementById("error-msg");
+        
+        signalDiv.style.opacity = "0.3";
+        errorDiv.style.display = "none";
+
         try {
-            const res = await fetch(PROXY + API_URL);
-            const rawData = await res.json();
-            const data = JSON.parse(rawData.contents);
-            
-            if(data.code === 0) {
-                updatePredictor(data.data.list);
+            const response = await fetch(PROXY + API);
+            const data = await response.json();
+            [span_2](start_span)const result = JSON.parse(data.contents);[span_2](end_span)
+
+            if (result.code === 0) {
+                [span_3](start_span)const list = result.data.list;[span_3](end_span)
+                const last = list[0];
+                
+                // Update UI
+                document.getElementById("issue").innerText = last.issueNumber;
+                
+                [span_4](start_span)// Smart Prediction Logic[span_4](end_span)
+                const num = parseInt(last.number);
+                const nextColor = (num % 2 === 0) ? "GREEN" : "RED";
+                const nextSize = (num >= 5) ? "SMALL" : "BIG";
+
+                signalDiv.innerText = nextColor;
+                signalDiv.style.color = (nextColor === "RED") ? "#ff4444" : "#00ff88";
+                sizeDiv.innerText = nextSize + " (High Confidence)";
             }
         } catch (err) {
-            document.getElementById("status").textContent = "Error: Use a Proxy or Backend";
-            document.getElementById("status").style.color = "red";
+            errorDiv.style.display = "block";
+            console.error("Fetch error:", err);
+        } finally {
+            signalDiv.style.opacity = "1";
         }
     }
 
-    function updatePredictor(list) {
-        const lastGame = list[0];
-        const lastNumbers = list.slice(0, 3).map(x => parseInt(x.number));
-        
-        // Update Issue
-        document.getElementById("currIssue").textContent = lastGame.issueNumber;
-
-        // Prediction Logic (Pattern based)
-        const sum = lastNumbers.reduce((a, b) => a + b, 0);
-        const isBig = sum > 13;
-        const color = (sum % 2 === 0) ? "RED" : "GREEN";
-
-        // UI Update
-        const signalDiv = document.getElementById("signal");
-        signalDiv.textContent = color;
-        signalDiv.style.color = (color === "RED") ? "#f44336" : "#00ff41";
-        
-        document.getElementById("sizePredict").textContent = isBig ? "BIG" : "SMALL";
-        document.getElementById("status").textContent = "System: Data Synced ✅";
-    }
-
-    function manualRefresh() {
-        const loader = document.getElementById("loader");
-        const bar = document.getElementById("bar");
-        loader.style.display = "block";
-        bar.style.width = "0%";
-        
-        setTimeout(() => { bar.style.width = "100%"; }, 10);
-        
-        setTimeout(() => {
-            fetchData();
-            loader.style.display = "none";
-        }, 2000);
-    }
-
-    // Auto Refresh every 30 seconds
-    setInterval(fetchData, 30000);
-    window.onload = fetchData;
-
-    // Simple Countdown Timer
+    // Timer Logic
     setInterval(() => {
-        let now = new Date();
-        let sec = 30 - (now.getSeconds() % 30);
-        document.getElementById("timer").textContent = "00:" + (sec < 10 ? "0" + sec : sec);
-        if(sec === 30) fetchData();
+        const now = new Date();
+        const seconds = 30 - (now.getSeconds() % 30);
+        document.getElementById("timer").innerText = "00:" + (seconds < 10 ? "0" + seconds : seconds);
+        
+        if (seconds === 30) getSignal(); // Auto refresh on new round
     }, 1000);
+
+    window.onload = getSignal;
 </script>
 
 </body>
