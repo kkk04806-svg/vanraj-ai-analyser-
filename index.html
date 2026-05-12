@@ -1,194 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>WinGo 30s – All Patterns Signal</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WinGo 30S - Live Result</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body {
-      font-family: monospace;
-      background: #000;
-      color: #0f0;
-      padding: 10px;
-      font-size: 13px;
+      background: linear-gradient(135deg, #0f0f1a, #1a0033);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
     }
-    .log { margin: 5px 0; }
-    .signal { color: #ff0; font-weight: bold; }
-    .red { color: #f00; }
-    .green { color: #0f0; }
-    .violet { color: #f0f; }
-    .small { color: #0ff; }
-    .big { color: #ff0; }
-    .info { color: #aaa; }
+    .period {
+      background: linear-gradient(90deg, #ffd700, #ffaa00);
+      color: #000;
+      font-size: 28px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+    }
+    .main-result {
+      background: rgba(0,0,0,0.85);
+      border: 6px solid #ffd700;
+      border-radius: 25px;
+      padding: 35px 20px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .number-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 75px;
+      font-weight: bold;
+      color: white;
+      margin: 20px auto;
+      box-shadow: 0 0 50px rgba(255,255,255,0.8);
+    }
+    .red { background: linear-gradient(45deg, #ff0000, #aa0000); }
+    .green { background: linear-gradient(45deg, #00ff00, #008800); }
+    .violet { background: linear-gradient(45deg, #8a2be2, #4b0082); }
+
+    .history-item {
+      background: #1a1a2e;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .last-updated {
+      font-size: 14px;
+      color: #00ff88;
+    }
   </style>
 </head>
 <body>
-  <h3>WinGo 30s – All Patterns Auto Signal</h3>
-  <p>Auto‑refresh every <b>15s</b> | Patterns: Streak, Alternate, Mirror, 3–4 Repeat</p>
 
-  <div id="signals" class="signal"></div>
-  <pre id="raw"></pre>
-  <div id="log"></div>
+<div class="container py-4">
 
-  <script>
-    const API_URL =
-      "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=";
+  <h1 class="text-center mb-4 text-warning">
+    <i class="fas fa-fire"></i> WinGo 30S Live Result
+  </h1>
 
-    function log(text, cls = "") {
-      const el = document.getElementById("log");
-      const row = document.createElement("div");
-      row.className = cls || "";
-      row.textContent = `[${new Date().toISOString()}] ${text}`;
-      el.prepend(row);
+  <!-- Period -->
+  <div class="period" id="period">
+    Period : <span id="period-number">Loading...</span>
+  </div>
+
+  <!-- Latest Result -->
+  <div class="main-result" id="main-result">
+    <h5 class="text-warning mb-3">LATEST RESULT</h5>
+    <div id="big-number" class="number-circle red">00</div>
+    <h2 id="color-name" class="text-uppercase fw-bold mb-2">RED</h2>
+    <h5 id="premium" class="text-warning fs-4">Premium : 0</h5>
+  </div>
+
+  <div class="text-center mb-3">
+    <span class="last-updated" id="last-updated">Last Updated: Just Now</span>
+  </div>
+
+  <!-- History -->
+  <h5 class="mb-3 text-light"><i class="fas fa-history"></i> Previous Results</h5>
+  <div id="history" class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3"></div>
+
+</div>
+
+<script>
+// API
+const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+
+let allResults = [];
+
+async function fetchResults() {
+  try {
+    const response = await fetch(API_URL + "?ts=" + Date.now(), {
+      cache: 'no-cache'
+    });
+    
+    if (!response.ok) throw new Error("Network error");
+
+    const data = await response.json();
+
+    if (data.code === 0 && data.data?.list?.length > 0) {
+      allResults = data.data.list;
+      showLatestResult();
+      showHistory();
+      updateTimestamp();
     }
+  } catch (error) {
+    console.error("API Error:", error);
+    document.getElementById("period-number").textContent = "Connection Error";
+  }
+}
 
-    function parseColor(number, colorStr) {
-      number = parseInt(number || "0");
-      const c = colorStr || "";
-      const bits = {
-        red: c.includes("red"),
-        green: c.includes("green"),
-        violet: c.includes("violet"),
-        big: number >= 5,
-        small: number <= 4,
-      };
-      bits.color = bits.red ? "red" : bits.green ? "green" : bits.violet ? "violet" : "unknown";
-      return bits;
-    }
+function getColorClass(color) {
+  if (color.includes("red")) return "red";
+  if (color.includes("green")) return "green";
+  if (color.includes("violet")) return "violet";
+  return "red";
+}
 
-    function detectPatterns(recs) {
-      // Only use last 20 for robustness
-      const list = recs.slice(0, 20).map((r) => parseColor(r.number, r.color));
-      if (list.length < 3) return { msg: "waiting..." };
+function showLatestResult() {
+  const latest = allResults[0];
 
-      const last = list[0];
-      const last2 = list[1];
-      const last3 = list[2];
-      const last4 = list[3];
+  document.getElementById("period-number").textContent = latest.issueNumber;
 
-      // --- 1) Streak (Dragon) ---
-      let streak = 1;
-      let streakType = last.color;
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].color === streakType) streak++;
-        else break;
-      }
+  const bigNum = document.getElementById("big-number");
+  bigNum.textContent = latest.number;
+  bigNum.className = `number-circle ${getColorClass(latest.color)}`;
 
-      // --- 2) Alternate (Red–Green–Red–Green) ---
-      let altLen = 1;
-      let isAlternate = true;
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].color === list[i - 1].color) {
-          isAlternate = false;
-          break;
-        } else if (list[i].color !== last.color) {
-          altLen++;
-        }
-      }
+  document.getElementById("color-name").textContent = latest.color.toUpperCase();
+  document.getElementById("premium").innerHTML = `Premium : <strong>${latest.premium}</strong>`;
+}
 
-      // --- 3) Mirror / Repetition (3–4 repeat) ---
-      let repeats3 = 0;
-      let repeats4 = 0;
-      for (let i = 0; i + 2 < list.length; i++) {
-        if (
-          list[i].color === list[i + 2].color &&
-          list[i].color === list[i + 1].color
-        )
-          repeats3++;
-      }
-      for (let i = 0; i + 3 < list.length; i++) {
-        if (
-          list[i].color === list[i + 1].color &&
-          list[i].color === list[i + 2].color &&
-          list[i].color === list[i + 3].color
-        )
-          repeats4++;
-      }
+function showHistory() {
+  const container = document.getElementById("history");
+  container.innerHTML = "";
 
-      // --- 4) Small / Big Streak ---
-      let bigStreak = 1,
-        smallStreak = 1;
-      for (let i = 1; i < list.length; i++) {
-        if (list[i].big) bigStreak++;
-        else {
-          smallStreak++;
-          break;
-        }
-      }
+  allResults.slice(1, 15).forEach(item => {
+    const div = document.createElement("div");
+    div.className = "col";
+    div.innerHTML = `
+      <div class="history-item">
+        <small class="text-white-50">${item.issueNumber.slice(-6)}</small><br>
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
+          ${item.number}
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
 
-      // --- 5) Signal Logic (tune this for your market) ---
-      let colorSignal = "WAIT";
-      let bsSignal = "WAIT";
+function updateTimestamp() {
+  document.getElementById("last-updated").textContent = 
+    "Last Updated: " + new Date().toLocaleTimeString('en-IN');
+}
 
-      // Streak continuation / reversal
-      if (streak >= 4) {
-        colorSignal = `TO FOLLOW: ${streakType}`; // Dragon pattern
-      } else if (streak >= 3 && !isAlternate) {
-        colorSignal = `TO REVERSE: ${last.color === "red" ? "green" : "red"}`;
-      }
+// Auto Refresh - Every 3.5 seconds (Best for WinGo 30S)
+setInterval(fetchResults, 3500);
 
-      if (isAlternate && altLen >= 6) {
-        colorSignal = `Continue Alternate: opposite of ${last.color}`;
-      }
+// Initial Load
+fetchResults();
+</script>
 
-      if (streak >= 4 && last.big) {
-        bsSignal = "BIG";
-      } else if (streak >= 4 && last.small) {
-        bsSignal = "SMALL";
-      }
-
-      if (bigStreak >= 4) bsSignal = "CONTRARY SMALL";
-      if (smallStreak >= 4) bsSignal = "CONTRARY BIG";
-
-      return {
-        color: last.color,
-        number: last.big ? "BIG" : "SMALL",
-        streak,
-        alternate: isAlternate,
-        altLen,
-        repeats3,
-        repeats4,
-        bigStreak,
-        smallStreak,
-        colorSignal,
-        bsSignal,
-      };
-    }
-
-    async function fetchLatest() {
-      const ts = Date.now();
-      const url = API_URL + ts;
-
-      try {
-        document.getElementById("raw").textContent = "Loading...";
-        const res = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
-        });
-
-        const data = await res.json();
-        document.getElementById("raw").textContent = JSON.stringify(data, null, 2);
-
-        if (data.code === 0 && data.data?.list?.length > 0) {
-          const p = detectPatterns(data.data.list);
-
-          const sig = document.getElementById("signals");
-          sig.innerHTML = `
-            <b>Detected: ${p.colorSignal} | ${p.bsSignal}</b><br>
-            Current: ${p.color} (${p.number}) | Streak: ${p.streak} | Alt: ${p.alternate ? "YES" : "NO"}<br>
-            Big Streak: ${p.bigStreak} | Small Streak: ${p.smallStreak}
-          `;
-
-          log(`Pattern: ${p.colorSignal} | ${p.bsSignal}`, "info");
-        } else {
-          log("API ERROR / EMPTY", "info");
-        }
-      } catch (err) {
-        log("ERROR: " + err.message, "info");
-      }
-    }
-
-    fetchLatest();
-    setInterval(fetchLatest, 15 * 1000); // 15s auto‑refresh
-  </script>
 </body>
 </html>
