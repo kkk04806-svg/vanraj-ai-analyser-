@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WinGo Analyst</title>
+  <title>WinGo 1 Min Live Analyst</title>
   <style>
     body{font-family:Arial,sans-serif;background:#0b1220;color:#e5e7eb;margin:0;padding:16px}
-    .card{background:#111827;border:1px solid #243244;border-radius:14px;padding:16px;max-width:1100px;margin:auto}
+    .card{background:#111827;border:1px solid #243244;border-radius:14px;padding:16px;max-width:1200px;margin:auto}
     h1,h2{margin:0 0 12px}
     .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0}
     .box{background:#0f172a;border:1px solid #243244;border-radius:12px;padding:12px}
@@ -17,17 +17,20 @@
     .green{color:#4ade80}
     .red{color:#f87171}
     .violet{color:#c084fc}
+    .match{background:#163024}
+    .muted{color:#94a3b8}
+    .row-top{background:#0f1d33}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>WinGo 1 Min Analyst</h1>
+    <h1>WinGo 1 Min</h1>
 
     <div class="grid">
-      <div class="box"><div>Count Down</div><h2 id="cd">--:--</h2></div>
-      <div class="box"><div>Period Id</div><h2 id="pid">20260512100010267</h2></div>
-      <div class="box"><div>Next prediction</div><h2 id="pred">9</h2></div>
-      <div class="box"><div>TOTAL BET AMOUNT</div><h2 id="amt">0</h2></div>
+      <div class="box"><div>Count Down</div><h2 id="countdown">--:--</h2></div>
+      <div class="box"><div>Period Id</div><h2 id="periodId">Loading...</h2></div>
+      <div class="box"><div>Next prediction</div><h2 id="nextPrediction">--</h2></div>
+      <div class="box"><div>TOTAL BET AMOUNT</div><h2 id="totalBet">0</h2></div>
     </div>
 
     <h2>Result</h2>
@@ -35,13 +38,16 @@
       <thead>
         <tr>
           <th>Result</th>
+          <th>Issue Number</th>
           <th>Number</th>
-          <th>Bet</th>
-          <th>No. of User</th>
-          <th>Amount to Pay</th>
+          <th>Color</th>
+          <th>Premium</th>
+          <th>Sum</th>
         </tr>
       </thead>
-      <tbody id="resultBody"></tbody>
+      <tbody id="resultBody">
+        <tr><td colspan="6" class="muted">Loading...</td></tr>
+      </tbody>
     </table>
 
     <h2 style="margin-top:18px">Live Bets</h2>
@@ -56,30 +62,48 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td colspan="5">wait..</td></tr>
+        <tr><td colspan="5" class="muted">wait..</td></tr>
       </tbody>
     </table>
   </div>
 
   <script>
-    const data = [
-      {"issueNumber":"20260512100010267","number":"9","color":"green","premium":"9","sum":0},
-      {"issueNumber":"20260512100010266","number":"0","color":"red,violet","premium":"0","sum":0},
-      {"issueNumber":"20260512100010265","number":"1","color":"green","premium":"1","sum":0},
-      {"issueNumber":"20260512100010264","number":"5","color":"green,violet","premium":"5","sum":0},
-      {"issueNumber":"20260512100010263","number":"4","color":"red","premium":"4","sum":0}
-    ];
+    const apiUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=" + Date.now();
 
-    const resultBody = document.getElementById('resultBody');
-    resultBody.innerHTML = data.map((r, i) => `
-      <tr>
-        <td><span class="badge">${i === 0 ? 'Latest' : 'Past'}</span></td>
-        <td>${r.number}</td>
-        <td class="${r.color.replaceAll(',', ' ')}">${r.color}</td>
-        <td>0</td>
-        <td>${r.sum}</td>
-      </tr>
-    `).join('');
+    function colorClass(color){
+      return color.split(",").map(s => s.trim()).join(" ");
+    }
+
+    function render(data){
+      const list = (data && data.data && data.data.list) ? data.data.list : [];
+      if (!list.length) return;
+
+      const latest = list[0];
+      document.getElementById("periodId").textContent = latest.issueNumber || "N/A";
+      document.getElementById("nextPrediction").textContent = latest.number || "--";
+      document.getElementById("resultBody").innerHTML = list.map((r, i) => {
+        const isTop = i === 0;
+        const isMatch = String(r.issueNumber) === String(latest.issueNumber);
+        return `
+          <tr class="${isTop ? 'row-top' : ''} ${isMatch ? 'match' : ''}">
+            <td><span class="badge">${isTop ? 'Latest' : 'Past'}</span></td>
+            <td>${r.issueNumber || ""}</td>
+            <td>${r.number || ""}</td>
+            <td class="${colorClass(r.color || '')}">${r.color || ""}</td>
+            <td>${r.premium || ""}</td>
+            <td>${r.sum ?? ""}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    fetch(apiUrl, {cache: "no-store"})
+      .then(r => r.json())
+      .then(render)
+      .catch(() => {
+        document.getElementById("resultBody").innerHTML =
+          '<tr><td colspan="6" class="muted">API load failed</td></tr>';
+      });
   </script>
 </body>
 </html>
