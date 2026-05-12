@@ -1,167 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WinGo 30S +1 Number Analyst</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WinGo Analyst</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 20px;
-      background: #f8f8f8;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-    }
-    .results {
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-    .reds { color: maroon; font-weight: bold; }
-    .greens { color: green; }
-    .violet { color: #8a2be2; }
-    .analysis {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background: #f0f8ff;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    .status {
-      margin-bottom: 10px;
-      color: #666;
-    }
+    body{font-family:Arial,sans-serif;background:#0b1220;color:#e5e7eb;margin:0;padding:16px}
+    .card{background:#111827;border:1px solid #243244;border-radius:14px;padding:16px;max-width:1100px;margin:auto}
+    h1,h2{margin:0 0 12px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0}
+    .box{background:#0f172a;border:1px solid #243244;border-radius:12px;padding:12px}
+    table{width:100%;border-collapse:collapse;margin-top:14px}
+    th,td{border-bottom:1px solid #243244;padding:10px;text-align:left;font-size:14px}
+    th{color:#93c5fd}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#1f2937}
+    .green{color:#4ade80}
+    .red{color:#f87171}
+    .violet{color:#c084fc}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>WinGo 30S - Last 10 +1 Number Analyst</h2>
-    <div class="status">Fetching data...</div>
+  <div class="card">
+    <h1>WinGo 1 Min Analyst</h1>
 
-    <h3>Last 10 Results (1st shown)</h3>
-    <div class="results">
-      <table>
-        <thead>
-          <tr>
-            <th>Issue</th>
-            <th>Number</th>
-            <th>Color</th>
-            <th>+1 Number</th>
-          </tr>
-        </thead>
-        <tbody id="list"></tbody>
-      </table>
+    <div class="grid">
+      <div class="box"><div>Count Down</div><h2 id="cd">--:--</h2></div>
+      <div class="box"><div>Period Id</div><h2 id="pid">20260512100010267</h2></div>
+      <div class="box"><div>Next prediction</div><h2 id="pred">9</h2></div>
+      <div class="box"><div>TOTAL BET AMOUNT</div><h2 id="amt">0</h2></div>
     </div>
 
-    <div class="analysis">
-      <h3>+1 Number & Color Analyst</h3>
-      <div id="stats">
-        <b>Red streak:</b> <span id="redStreak">0</span> |
-        <b>Green streak:</b> <span id="greenStreak">0</span> |
-        <b>Has 0/5 (violet):</b> <span id="violetStreak">0</span><br>
-        <b>Last +1 color trend:</b> <span id="trend">—</span>
-      </div>
-    </div>
+    <h2>Result</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Result</th>
+          <th>Number</th>
+          <th>Bet</th>
+          <th>No. of User</th>
+          <th>Amount to Pay</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+
+    <h2 style="margin-top:18px">Live Bets</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Value</th>
+          <th>Amount</th>
+          <th>Mobile</th>
+          <th>Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5">wait..</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <script>
-    const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+    const data = [
+      {"issueNumber":"20260512100010267","number":"9","color":"green","premium":"9","sum":0},
+      {"issueNumber":"20260512100010266","number":"0","color":"red,violet","premium":"0","sum":0},
+      {"issueNumber":"20260512100010265","number":"1","color":"green","premium":"1","sum":0},
+      {"issueNumber":"20260512100010264","number":"5","color":"green,violet","premium":"5","sum":0},
+      {"issueNumber":"20260512100010263","number":"4","color":"red","premium":"4","sum":0}
+    ];
 
-    function renderList(items) {
-      const tbody = document.getElementById("list");
-      tbody.innerHTML = "";
-
-      // +1 number: next record ka number
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const next = items[i + 1] || { number: "—" };
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${item.issueNumber}</td>
-          <td>${item.number}</td>
-          <td class="${
-            item.color.includes("red") ? "reds" :
-            item.color.includes("green") ? "greens" : "violet"
-          }">
-            ${item.color}
-          </td>
-          <td>${next.number}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
-
-    function analyzeColors(items) {
-      let lastColor = null;
-      let r = 0, g = 0, v = 0;
-      let streaks = [];
-
-      items.forEach(item => {
-        let color = "";
-        if (item.color.includes("red")) color = "red";
-        else if (item.color.includes("green")) color = "green";
-        else if (item.color.includes("violet")) color = "violet";
-
-        streaks.push(color);
-
-        if (color === "red") r++;
-        if (color === "green") g++;
-        if (color === "violet") v++;
-      });
-
-      // Last 3 ke hisaab se simple trend
-      const recent = streaks.slice(-3).join(" → ");
-      const rStreak = streaks.filter(c => c === "red").length;
-      const gStreak = streaks.filter(c => c === "green").length;
-      const vStreak = streaks.filter(c => c === "violet").length;
-
-      document.getElementById("redStreak").textContent = rStreak;
-      document.getElementById("greenStreak").textContent = gStreak;
-      document.getElementById("violetStreak").textContent = vStreak;
-      document.getElementById("trend").textContent = recent || "no data";
-    }
-
-    async function load() {
-      try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        if (!data.data || !data.data.list) {
-          document.querySelector(".status").textContent = "Invalid response";
-          return;
-        }
-
-        const list = data.data.list; // last 10 +1
-
-        renderList(list);
-        analyzeColors(list);
-        document.querySelector(".status").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-      } catch (err) {
-        document.querySelector(".status").textContent = "Error: " + err.message;
-        console.error(err);
-      }
-    }
-
-    load();
-    // Every 5 seconds refresh
-    setInterval(load, 5000);
+    const resultBody = document.getElementById('resultBody');
+    resultBody.innerHTML = data.map((r, i) => `
+      <tr>
+        <td><span class="badge">${i === 0 ? 'Latest' : 'Past'}</span></td>
+        <td>${r.number}</td>
+        <td class="${r.color.replaceAll(',', ' ')}">${r.color}</td>
+        <td>0</td>
+        <td>${r.sum}</td>
+      </tr>
+    `).join('');
   </script>
 </body>
 </html>
