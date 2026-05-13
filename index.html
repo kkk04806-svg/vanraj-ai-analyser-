@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body {
-      background: linear-gradient(135deg, #0f0f1a, #1a0033);
+      background: #0f0f1a;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       min-height: 100vh;
@@ -16,46 +16,36 @@
     .next-box {
       background: linear-gradient(90deg, #00ff88, #00cc66);
       color: #000;
-      padding: 20px;
+      padding: 25px 20px;
       border-radius: 16px;
       text-align: center;
       margin-bottom: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.7);
     }
     .timer {
-      font-size: 52px;
+      font-size: 58px;
       font-weight: bold;
-      color: #000;
     }
     .warning {
-      background: #ff4444 !important;
+      background: #ff3333 !important;
       color: white !important;
       animation: blink 0.8s infinite;
     }
-    @keyframes blink { 50% { opacity: 0.7; } }
+    @keyframes blink { 50% { opacity: 0.6; } }
 
     .last-result {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
       border: 2px solid #ffd700;
       border-radius: 12px;
       padding: 15px;
     }
     .number-circle {
-      width: 80px; height: 80px;
+      width: 90px; height: 90px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 32px; font-weight: bold;
+      font-size: 38px; font-weight: bold;
       color: white;
-      box-shadow: 0 0 20px rgba(255,255,255,0.5);
-    }
-    .red { background: #ff0000; }
-    .green { background: #00cc00; }
-    .violet { background: #8a2be2; }
-    .hot { background: #ffd700; color: black; font-size: 28px; }
-
-    .card {
-      background: rgba(0,0,0,0.6);
-      border: none;
+      box-shadow: 0 0 25px rgba(255,255,255,0.6);
     }
   </style>
 </head>
@@ -63,9 +53,9 @@
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S - Next Prediction</h1>
+  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Next Prediction</h1>
 
-  <!-- Next Period -->
+  <!-- Next Period - Sabse Bada -->
   <div class="next-box" id="next-box">
     <h5>Next Period</h5>
     <h3 id="next-period" class="mb-2">Loading...</h3>
@@ -76,13 +66,13 @@
   <!-- Last Result -->
   <div class="last-result mb-4 text-center">
     <h5 class="text-warning mb-2">Last Result</h5>
-    <div id="last-result" class="d-flex justify-content-center align-items-center gap-3"></div>
+    <div id="last-result" class="d-flex justify-content-center align-items-center gap-4"></div>
   </div>
 
   <!-- Suggested Number -->
-  <div class="card mb-4">
+  <div class="card bg-dark mb-4">
     <div class="card-body text-center">
-      <h5 class="text-info">Suggested Next Number (Trend Based)</h5>
+      <h5 class="text-info mb-3">Suggested Next Number (Trend Based)</h5>
       <div id="prediction" class="my-3"></div>
     </div>
   </div>
@@ -106,15 +96,15 @@ let lastIssue = null;
 
 async function fetchAll() {
   try {
-    const [hist, trend] = await Promise.all([
+    const [histRes, trendRes] = await Promise.all([
       fetch(HISTORY_API + "?ts=" + Date.now()),
       fetch(TREND_API)
     ]);
 
-    const histData = await hist.json();
-    const trendData = await trend.json();
+    const histData = await histRes.json();
+    const trendData = await trendRes.json();
 
-    if (histData.code === 0 && histData.data?.list) {
+    if (histData.code === 0 && histData.data?.list?.length > 0) {
       const current = histData.data.list[0];
       if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
         lastIssue = current;
@@ -128,7 +118,9 @@ async function fetchAll() {
       showTrend(trendData.data);
       showPrediction(trendData.data);
     }
-  } catch(e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function showLastResult(item) {
@@ -141,20 +133,22 @@ function showLastResult(item) {
   `;
 }
 
-function getColorClass(c) {
-  if (c.includes("red")) return "red";
-  if (c.includes("green")) return "green";
-  if (c.includes("violet")) return "violet";
+function getColorClass(color) {
+  if (color.includes("red")) return "red";
+  if (color.includes("green")) return "green";
+  if (color.includes("violet")) return "violet";
   return "red";
 }
 
 function showPrediction(data) {
   const sorted = [...data].sort((a,b) => b.missingCount - a.missingCount);
-  const due = sorted[0]; // Cold (Due)
+  const due = sorted[0];
 
   document.getElementById("prediction").innerHTML = `
-    <div class="number-circle hot mx-auto mb-2">${due.number}</div>
-    <small class="text-warning">Missing ${due.missingCount} times → High Chance</small>
+    <div class="number-circle" style="background:#ffd700;color:black;font-size:42px;width:100px;height:100px;">
+      ${due.number}
+    </div>
+    <small class="text-warning">Missing ${due.missingCount} times → Very High Chance</small>
   `;
 }
 
@@ -162,10 +156,11 @@ function showTrend(data) {
   const container = document.getElementById("trend");
   container.innerHTML = "";
   data.forEach(item => {
+    const isHot = item.missingCount > 15;
     const div = document.createElement("div");
-    div.className = "col-4 col-md-2 text-center";
+    div.className = "col-3 col-md-2 text-center";
     div.innerHTML = `
-      <div class="number-circle ${item.missingCount > 15 ? 'hot' : 'red'}">${item.number}</div>
+      <div class="number-circle ${isHot ? 'hot' : 'red'}" style="font-size:26px">${item.number}</div>
       <small>Miss: <b>${item.missingCount}</b></small>
     `;
     container.appendChild(div);
@@ -173,19 +168,22 @@ function showTrend(data) {
 }
 
 function startTimer() {
-  let time = 30;
+  let timeLeft = 30;
   const timerEl = document.getElementById("timer");
   const box = document.getElementById("next-box");
 
-  const intv = setInterval(() => {
-    time--;
-    timerEl.textContent = time;
+  const interval = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = timeLeft;
 
-    if (time <= 10) box.classList.add("warning");
-    else box.classList.remove("warning");
+    if (timeLeft <= 10) {
+      box.classList.add("warning");
+    } else {
+      box.classList.remove("warning");
+    }
 
-    if (time <= 0) {
-      clearInterval(intv);
+    if (timeLeft <= 0) {
+      clearInterval(interval);
       fetchAll();
     }
   }, 1000);
@@ -210,7 +208,7 @@ function showHistory(list) {
 }
 
 // Auto Refresh
-setInterval(fetchAll, 4000);
+setInterval(fetchAll, 3500);
 fetchAll();
 </script>
 
