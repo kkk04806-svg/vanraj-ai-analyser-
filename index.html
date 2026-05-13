@@ -3,34 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Big Small Analysis</title>
+  <title>WinGo 30S - Sure Shot</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body { background: linear-gradient(135deg, #0f0f1a, #1a0033); color: #fff; font-family: 'Segoe UI', sans-serif; }
-    .next-box { background: linear-gradient(90deg, #00ff88, #00cc66); color: #000; padding: 20px; border-radius: 18px; text-align: center; margin-bottom: 20px; font-weight: bold; }
-    .timer { font-size: 50px; font-weight: bold; }
+    .next-box { background: linear-gradient(90deg, #00ff88, #00cc66); color: #000; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(0,255,136,0.6); }
+    .timer { font-size: 55px; font-weight: bold; }
     .warning { background: #ff0000 !important; color: white !important; animation: blink 0.8s infinite; }
-    @keyframes blink { 50% { opacity: 0.7; } }
-    .number-circle { width: 130px; height: 130px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: bold; margin: 15px auto; box-shadow: 0 0 40px rgba(255,255,255,0.7); }
+    @keyframes blink { 50% { opacity: 0.6; } }
+    .number-circle { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 65px; font-weight: bold; margin: 15px auto; box-shadow: 0 0 45px rgba(255,255,255,0.7); }
     .red { background: linear-gradient(#ff0000, #aa0000); }
     .green { background: linear-gradient(#00ff00, #008800); }
     .violet { background: linear-gradient(#8a2be2, #4b0082); }
-    .prediction { font-size: 22px; font-weight: bold; }
+    .sure-shot { font-size: 24px; font-weight: bold; padding: 15px; border-radius: 12px; }
   </style>
 </head>
 <body>
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">WinGo 30S - Big/Small Smart Analysis</h1>
+  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S - Sure Shot</h1>
 
   <!-- Next Period -->
   <div class="next-box" id="next-box">
-    <h5>Next Period</h5>
+    <h5>NEXT PERIOD</h5>
     <h3 id="next-period">Loading...</h3>
     <div class="timer" id="timer">30</div>
-    <small>Seconds Left</small>
+    <small>Seconds Remaining</small>
   </div>
 
   <!-- Last Result -->
@@ -41,21 +41,29 @@
     <h5 id="premium">Premium : 0</h5>
   </div>
 
-  <!-- Big Small Prediction -->
-  <div class="text-center mb-4 p-4 bg-dark rounded">
-    <h5>Big / Small Prediction</h5>
-    <div id="prediction" class="prediction text-success">Loading Analysis...</div>
-    <small id="confidence" class="text-warning">Confidence: --%</small>
+  <!-- Sure Shot Prediction -->
+  <div class="sure-shot bg-success text-center mb-4" id="sure-shot">
+    Analysing...
   </div>
 
-  <!-- Recent Trend -->
-  <div class="mb-4">
-    <h5>Recent Trend (Last 10)</h5>
-    <div id="trend" class="d-flex justify-content-center gap-2 flex-wrap"></div>
+  <!-- Big Small Stats -->
+  <div class="row text-center mb-4">
+    <div class="col-6">
+      <div class="p-3 bg-dark rounded">
+        <h4 id="big-count" class="text-warning">0</h4>
+        <small>BIG (5-9)</small>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="p-3 bg-dark rounded">
+        <h4 id="small-count" class="text-info">0</h4>
+        <small>SMALL (0-4)</small>
+      </div>
+    </div>
   </div>
 
   <!-- History -->
-  <h5 class="mb-3">Recent Results</h5>
+  <h5 class="mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
@@ -80,16 +88,11 @@ async function fetchResults() {
       }
 
       showHistory(data.data.list);
-      analyzeBigSmall(data.data.list);
+      analyzeData(data.data.list);
     }
-  } catch (e) { console.error(e); }
-}
-
-function getColorClass(color) {
-  if (color.includes("red")) return "red";
-  if (color.includes("green")) return "green";
-  if (color.includes("violet")) return "violet";
-  return "red";
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function showLastResult(item) {
@@ -100,17 +103,24 @@ function showLastResult(item) {
   document.getElementById("next-period").textContent = (parseInt(item.issueNumber) + 1);
 }
 
+function getColorClass(color) {
+  if (color.includes("red")) return "red";
+  if (color.includes("green")) return "green";
+  if (color.includes("violet")) return "violet";
+  return "red";
+}
+
 function startTimer() {
   let time = 30;
   const timerEl = document.getElementById("timer");
-  const nextBox = document.getElementById("next-box");
+  const box = document.getElementById("next-box");
 
   const int = setInterval(() => {
     time--;
     timerEl.textContent = time;
 
-    if (time <= 10) nextBox.classList.add("warning");
-    else nextBox.classList.remove("warning");
+    if (time <= 10) box.classList.add("warning");
+    else box.classList.remove("warning");
 
     if (time <= 0) {
       clearInterval(int);
@@ -119,9 +129,9 @@ function startTimer() {
   }, 1000);
 }
 
-function analyzeBigSmall(list) {
-  const recent = list.slice(0, 15);
+function analyzeData(list) {
   let big = 0, small = 0;
+  const recent = list.slice(0, 20);
 
   recent.forEach(item => {
     const num = parseInt(item.number);
@@ -129,47 +139,46 @@ function analyzeBigSmall(list) {
     else small++;
   });
 
-  const total = big + small;
-  const bigPercent = Math.round((big / total) * 100);
-  const smallPercent = Math.round((small / total) * 100);
+  const bigPer = Math.round((big / recent.length) * 100);
+  const smallPer = 100 - bigPer;
+
+  document.getElementById("big-count").textContent = big;
+  document.getElementById("small-count").textContent = small;
 
   let prediction = "";
-  let confidence = 65;
+  let color = "success";
 
-  if (bigPercent > smallPercent + 15) {
-    prediction = "🔥 BIG Recommended";
-    confidence = 82;
-  } else if (smallPercent > bigPercent + 15) {
-    prediction = "🔥 SMALL Recommended";
-    confidence = 78;
-  } else if (bigPercent > 55) {
-    prediction = "Slightly BIG";
-    confidence = 70;
+  if (bigPer >= 65) {
+    prediction = `🔥 BIG ( ${bigPer}% ) - Sure Shot`;
+    color = "warning";
+  } else if (smallPer >= 65) {
+    prediction = `🔥 SMALL ( ${smallPer}% ) - Sure Shot`;
+  } else if (bigPer > smallPer) {
+    prediction = `Slightly BIG (${bigPer}%)`;
   } else {
-    prediction = "Slightly SMALL";
-    confidence = 68;
+    prediction = `Slightly SMALL (${smallPer}%)`;
   }
 
-  document.getElementById("prediction").innerHTML = prediction;
-  document.getElementById("confidence").textContent = `Confidence: ${confidence}%`;
+  const sureShotEl = document.getElementById("sure-shot");
+  sureShotEl.innerHTML = prediction;
+  sureShotEl.className = `sure-shot bg-${color} text-center mb-4`;
 }
 
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
 
-  list.slice(0, 10).forEach(item => {
+  list.slice(0, 12).forEach(item => {
     const num = parseInt(item.number);
-    const bs = num >= 5 ? "Big" : "Small";
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:50px;height:50px;font-size:22px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
           ${item.number}
         </div>
-        <small class="${num>=5?'text-danger':'text-info'}">${bs}</small>
+        <small>${num >= 5 ? 'BIG' : 'SMALL'}</small>
       </div>
     `;
     container.appendChild(div);
