@@ -20,10 +20,10 @@
       border-radius: 18px;
       text-align: center;
       margin-bottom: 25px;
-      box-shadow: 0 0 40px rgba(0, 255, 136, 0.7);
+      box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
     }
     .timer {
-      font-size: 62px;
+      font-size: 65px;
       font-weight: bold;
     }
     .warning {
@@ -31,14 +31,13 @@
       color: white !important;
       animation: blink 0.8s infinite;
     }
-    @keyframes blink { 50% { opacity: 0.65; } }
+    @keyframes blink { 50% { opacity: 0.6; } }
 
     .last-result {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,215,0,0.1);
       border: 3px solid #ffd700;
       border-radius: 15px;
       padding: 20px;
-      text-align: center;
     }
     .number-circle {
       width: 110px; height: 110px;
@@ -46,7 +45,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 48px; font-weight: bold;
       color: white;
-      box-shadow: 0 0 30px rgba(255,255,255,0.6);
+      box-shadow: 0 0 30px rgba(255,255,255,0.7);
     }
     .red { background: linear-gradient(#ff0000, #cc0000); }
     .green { background: linear-gradient(#00ff00, #00aa00); }
@@ -59,7 +58,7 @@
 
   <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Next Result</h1>
 
-  <!-- Next Result (Sabse Upar & Bada) -->
+  <!-- Next Period (Sabse Important) -->
   <div class="next-main" id="next-main">
     <h5>Next Period</h5>
     <h2 id="next-period" class="mb-3">Loading...</h2>
@@ -68,13 +67,13 @@
   </div>
 
   <!-- Last Result -->
-  <div class="last-result mb-4">
+  <div class="last-result mb-4 text-center">
     <h5 class="text-warning mb-2">Last Result</h5>
     <div id="last-result" class="d-flex justify-content-center align-items-center gap-4"></div>
   </div>
 
   <div class="text-center mb-4">
-    <small id="status" class="text-success">Connected to Server</small>
+    <small id="status" class="text-success">Connected</small>
   </div>
 
   <!-- Recent History -->
@@ -84,23 +83,30 @@
 </div>
 
 <script>
-const HISTORY_API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let lastIssue = null;
+let lastIssueNumber = null;
 
 async function fetchResults() {
   try {
-    const res = await fetch(HISTORY_API + "?ts=" + Date.now());
+    const res = await fetch(API_URL + "?ts=" + Date.now());
     const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
       const current = data.data.list[0];
 
-      if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
-        lastIssue = current;
-        showLastResult(current);
+      // Update Last Result
+      showLastResult(current);
+
+      // Calculate Next Period
+      showNextPeriod(current.issueNumber);
+
+      // Start Timer if new period
+      if (lastIssueNumber !== current.issueNumber) {
+        lastIssueNumber = current.issueNumber;
         startTimer();
       }
+
       showHistory(data.data.list);
       document.getElementById("status").innerHTML = "✅ Live Connected";
     }
@@ -113,7 +119,7 @@ function showLastResult(item) {
   document.getElementById("last-result").innerHTML = `
     <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
     <div>
-      <h5>${item.color.toUpperCase()}</h5>
+      <h5 class="mb-0">${item.color.toUpperCase()}</h5>
       <small>Premium: ${item.premium}</small>
     </div>
   `;
@@ -126,14 +132,20 @@ function getColorClass(color) {
   return "red";
 }
 
+function showNextPeriod(currentIssue) {
+  // Next period = current + 1
+  const next = (BigInt(currentIssue) + BigInt(1)).toString();
+  document.getElementById("next-period").textContent = next;
+}
+
 function startTimer() {
-  if (window.timerInterval) clearInterval(window.timerInterval);
+  if (window.timerInt) clearInterval(window.timerInt);
 
   let timeLeft = 30;
   const timerEl = document.getElementById("timer");
   const box = document.getElementById("next-main");
 
-  window.timerInterval = setInterval(() => {
+  window.timerInt = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
 
