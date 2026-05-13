@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Next Result</title>
+  <title>WinGo 30S - Current Period</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -13,39 +13,37 @@
       font-family: 'Segoe UI', sans-serif;
       min-height: 100vh;
     }
-    .next-main {
-      background: linear-gradient(90deg, #00ff88, #00cc66);
+    .current-period {
+      background: linear-gradient(90deg, #ffd700, #ffaa00);
       color: #000;
-      padding: 25px;
-      border-radius: 18px;
+      padding: 20px;
+      border-radius: 16px;
       text-align: center;
-      margin-bottom: 25px;
-      box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+      margin-bottom: 20px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
     }
     .timer {
-      font-size: 65px;
+      font-size: 55px;
       font-weight: bold;
     }
-    .warning {
-      background: #ff3333 !important;
-      color: white !important;
-      animation: blink 0.8s infinite;
-    }
+    .warning { animation: blink 0.8s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
 
-    .last-result {
-      background: rgba(255,215,0,0.1);
-      border: 3px solid #ffd700;
-      border-radius: 15px;
-      padding: 20px;
+    .result-box {
+      background: rgba(0,0,0,0.8);
+      border: 4px solid #ffd700;
+      border-radius: 16px;
+      padding: 25px;
+      text-align: center;
     }
     .number-circle {
-      width: 110px; height: 110px;
+      width: 130px; height: 130px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 48px; font-weight: bold;
+      font-size: 60px; font-weight: bold;
       color: white;
-      box-shadow: 0 0 30px rgba(255,255,255,0.7);
+      margin: 15px auto;
+      box-shadow: 0 0 40px rgba(255,255,255,0.7);
     }
     .red { background: linear-gradient(#ff0000, #cc0000); }
     .green { background: linear-gradient(#00ff00, #00aa00); }
@@ -56,20 +54,20 @@
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Next Result</h1>
+  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Current Period</h1>
 
-  <!-- Next Period (Sabse Important) -->
-  <div class="next-main" id="next-main">
-    <h5>Next Period</h5>
-    <h2 id="next-period" class="mb-3">Loading...</h2>
+  <!-- Current Running Period -->
+  <div class="current-period" id="current-box">
+    <h5>Current Period</h5>
+    <h3 id="current-period" class="mb-3">Loading...</h3>
     <div class="timer" id="timer">30</div>
     <small>seconds remaining</small>
   </div>
 
-  <!-- Last Result -->
-  <div class="last-result mb-4 text-center">
-    <h5 class="text-warning mb-2">Last Result</h5>
-    <div id="last-result" class="d-flex justify-content-center align-items-center gap-4"></div>
+  <!-- Result of Current Period -->
+  <div class="result-box mb-4" id="result-box">
+    <h5 class="text-warning">Current Period Result</h5>
+    <div id="current-result" class="d-flex justify-content-center align-items-center gap-4"></div>
   </div>
 
   <div class="text-center mb-4">
@@ -85,7 +83,7 @@
 <script>
 const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let lastIssueNumber = null;
+let currentRunningPeriod = null;
 
 async function fetchResults() {
   try {
@@ -93,33 +91,31 @@ async function fetchResults() {
     const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
-      const current = data.data.list[0];
+      const latest = data.data.list[0];
 
-      // Update Last Result
-      showLastResult(current);
+      // Show Current Running Period
+      showCurrentPeriod(latest.issueNumber);
 
-      // Calculate Next Period
-      showNextPeriod(current.issueNumber);
-
-      // Start Timer if new period
-      if (lastIssueNumber !== current.issueNumber) {
-        lastIssueNumber = current.issueNumber;
-        startTimer();
-      }
+      // Show Result of Latest Period
+      showCurrentResult(latest);
 
       showHistory(data.data.list);
       document.getElementById("status").innerHTML = "✅ Live Connected";
     }
   } catch (e) {
-    document.getElementById("status").innerHTML = "❌ Connection Error";
+    document.getElementById("status").innerHTML = "❌ Error";
   }
 }
 
-function showLastResult(item) {
-  document.getElementById("last-result").innerHTML = `
+function showCurrentPeriod(issueNumber) {
+  document.getElementById("current-period").textContent = issueNumber;
+}
+
+function showCurrentResult(item) {
+  document.getElementById("current-result").innerHTML = `
     <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
     <div>
-      <h5 class="mb-0">${item.color.toUpperCase()}</h5>
+      <h4 class="mb-0">${item.color.toUpperCase()}</h4>
       <small>Premium: ${item.premium}</small>
     </div>
   `;
@@ -132,35 +128,6 @@ function getColorClass(color) {
   return "red";
 }
 
-function showNextPeriod(currentIssue) {
-  // Next period = current + 1
-  const next = (BigInt(currentIssue) + BigInt(1)).toString();
-  document.getElementById("next-period").textContent = next;
-}
-
-function startTimer() {
-  if (window.timerInt) clearInterval(window.timerInt);
-
-  let timeLeft = 30;
-  const timerEl = document.getElementById("timer");
-  const box = document.getElementById("next-main");
-
-  window.timerInt = setInterval(() => {
-    timeLeft--;
-    timerEl.textContent = timeLeft;
-
-    if (timeLeft <= 10) {
-      box.classList.add("warning");
-    } else {
-      box.classList.remove("warning");
-    }
-
-    if (timeLeft <= 0) {
-      fetchResults();
-    }
-  }, 1000);
-}
-
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
@@ -170,7 +137,7 @@ function showHistory(list) {
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:55px;height:55px;font-size:24px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
           ${item.number}
         </div>
       </div>
@@ -179,7 +146,7 @@ function showHistory(list) {
   });
 }
 
-// Auto Refresh
+// Auto Refresh every 3 seconds
 setInterval(fetchResults, 3000);
 fetchResults();
 </script>
