@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Next Prediction</title>
+  <title>WinGo 30S - Next Result</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body {
-      background: #0f0f1a;
+      background: linear-gradient(135deg, #0f0f1a, #1a0033);
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       min-height: 100vh;
     }
-    .next-box {
+    .next-main {
       background: linear-gradient(90deg, #00ff88, #00cc66);
       color: #000;
-      padding: 25px 20px;
-      border-radius: 16px;
+      padding: 25px;
+      border-radius: 18px;
       text-align: center;
-      margin-bottom: 20px;
-      box-shadow: 0 0 35px rgba(0, 255, 136, 0.7);
+      margin-bottom: 25px;
+      box-shadow: 0 0 40px rgba(0, 255, 136, 0.7);
     }
     .timer {
-      font-size: 58px;
+      font-size: 62px;
       font-weight: bold;
     }
     .warning {
@@ -31,95 +31,81 @@
       color: white !important;
       animation: blink 0.8s infinite;
     }
-    @keyframes blink { 50% { opacity: 0.6; } }
+    @keyframes blink { 50% { opacity: 0.65; } }
 
     .last-result {
-      background: rgba(255,255,255,0.08);
-      border: 2px solid #ffd700;
-      border-radius: 12px;
-      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border: 3px solid #ffd700;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
     }
     .number-circle {
-      width: 90px; height: 90px;
+      width: 110px; height: 110px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 38px; font-weight: bold;
+      font-size: 48px; font-weight: bold;
       color: white;
-      box-shadow: 0 0 25px rgba(255,255,255,0.6);
+      box-shadow: 0 0 30px rgba(255,255,255,0.6);
     }
+    .red { background: linear-gradient(#ff0000, #cc0000); }
+    .green { background: linear-gradient(#00ff00, #00aa00); }
+    .violet { background: linear-gradient(#aa44ff, #6600cc); }
   </style>
 </head>
 <body>
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Next Prediction</h1>
+  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Next Result</h1>
 
-  <!-- Next Period - Sabse Bada -->
-  <div class="next-box" id="next-box">
+  <!-- Next Result (Sabse Upar & Bada) -->
+  <div class="next-main" id="next-main">
     <h5>Next Period</h5>
-    <h3 id="next-period" class="mb-2">Loading...</h3>
+    <h2 id="next-period" class="mb-3">Loading...</h2>
     <div class="timer" id="timer">30</div>
     <small>seconds remaining</small>
   </div>
 
   <!-- Last Result -->
-  <div class="last-result mb-4 text-center">
+  <div class="last-result mb-4">
     <h5 class="text-warning mb-2">Last Result</h5>
     <div id="last-result" class="d-flex justify-content-center align-items-center gap-4"></div>
   </div>
 
-  <!-- Suggested Number -->
-  <div class="card bg-dark mb-4">
-    <div class="card-body text-center">
-      <h5 class="text-info mb-3">Suggested Next Number (Trend Based)</h5>
-      <div id="prediction" class="my-3"></div>
-    </div>
+  <div class="text-center mb-4">
+    <small id="status" class="text-success">Connected to Server</small>
   </div>
 
-  <!-- Hot & Cold -->
-  <h5 class="mb-3 text-light">Hot & Cold Numbers (Missing Count)</h5>
-  <div id="trend" class="row g-3"></div>
-
-  <!-- History -->
-  <h5 class="mt-4 mb-3 text-light">Recent Results</h5>
+  <!-- Recent History -->
+  <h5 class="mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
 
 <script>
-// APIs
 const HISTORY_API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-const TREND_API = "https://api.ar-lottery01.com/api/Lottery/GetTrendStatistics?gameCode=WinGo_30S&pageNo=1&pageSize=10&language=en";
 
 let lastIssue = null;
 
-async function fetchAll() {
+async function fetchResults() {
   try {
-    const [histRes, trendRes] = await Promise.all([
-      fetch(HISTORY_API + "?ts=" + Date.now()),
-      fetch(TREND_API)
-    ]);
+    const res = await fetch(HISTORY_API + "?ts=" + Date.now());
+    const data = await res.json();
 
-    const histData = await histRes.json();
-    const trendData = await trendRes.json();
+    if (data.code === 0 && data.data?.list?.length > 0) {
+      const current = data.data.list[0];
 
-    if (histData.code === 0 && histData.data?.list?.length > 0) {
-      const current = histData.data.list[0];
       if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
         lastIssue = current;
         showLastResult(current);
         startTimer();
       }
-      showHistory(histData.data.list);
-    }
-
-    if (trendData.code === 0 && trendData.data) {
-      showTrend(trendData.data);
-      showPrediction(trendData.data);
+      showHistory(data.data.list);
+      document.getElementById("status").innerHTML = "✅ Live Connected";
     }
   } catch (e) {
-    console.error(e);
+    document.getElementById("status").innerHTML = "❌ Connection Error";
   }
 }
 
@@ -127,7 +113,7 @@ function showLastResult(item) {
   document.getElementById("last-result").innerHTML = `
     <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
     <div>
-      <h5 class="mb-0">${item.color.toUpperCase()}</h5>
+      <h5>${item.color.toUpperCase()}</h5>
       <small>Premium: ${item.premium}</small>
     </div>
   `;
@@ -140,39 +126,14 @@ function getColorClass(color) {
   return "red";
 }
 
-function showPrediction(data) {
-  const sorted = [...data].sort((a,b) => b.missingCount - a.missingCount);
-  const due = sorted[0];
-
-  document.getElementById("prediction").innerHTML = `
-    <div class="number-circle" style="background:#ffd700;color:black;font-size:42px;width:100px;height:100px;">
-      ${due.number}
-    </div>
-    <small class="text-warning">Missing ${due.missingCount} times → Very High Chance</small>
-  `;
-}
-
-function showTrend(data) {
-  const container = document.getElementById("trend");
-  container.innerHTML = "";
-  data.forEach(item => {
-    const isHot = item.missingCount > 15;
-    const div = document.createElement("div");
-    div.className = "col-3 col-md-2 text-center";
-    div.innerHTML = `
-      <div class="number-circle ${isHot ? 'hot' : 'red'}" style="font-size:26px">${item.number}</div>
-      <small>Miss: <b>${item.missingCount}</b></small>
-    `;
-    container.appendChild(div);
-  });
-}
-
 function startTimer() {
+  if (window.timerInterval) clearInterval(window.timerInterval);
+
   let timeLeft = 30;
   const timerEl = document.getElementById("timer");
-  const box = document.getElementById("next-box");
+  const box = document.getElementById("next-main");
 
-  const interval = setInterval(() => {
+  window.timerInterval = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
 
@@ -183,8 +144,7 @@ function startTimer() {
     }
 
     if (timeLeft <= 0) {
-      clearInterval(interval);
-      fetchAll();
+      fetchResults();
     }
   }, 1000);
 }
@@ -192,13 +152,13 @@ function startTimer() {
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
-  list.slice(1, 10).forEach(item => {
+  list.slice(1, 12).forEach(item => {
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:55px;height:55px;font-size:24px;">
           ${item.number}
         </div>
       </div>
@@ -208,8 +168,8 @@ function showHistory(list) {
 }
 
 // Auto Refresh
-setInterval(fetchAll, 3500);
-fetchAll();
+setInterval(fetchResults, 3000);
+fetchResults();
 </script>
 
 </body>
