@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Current Period</title>
+  <title>WinGo 30S - Live</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -20,10 +20,10 @@
       border-radius: 16px;
       text-align: center;
       margin-bottom: 20px;
-      box-shadow: 0 0 35px rgba(255, 215, 0, 0.8);
+      box-shadow: 0 0 35px rgba(255, 215, 0, 0.9);
     }
     .timer {
-      font-size: 62px;
+      font-size: 65px;
       font-weight: bold;
     }
     .warning {
@@ -44,7 +44,7 @@
       width: 130px; height: 130px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 58px; font-weight: bold;
+      font-size: 60px; font-weight: bold;
       color: white;
       margin: 15px auto;
       box-shadow: 0 0 40px rgba(255,255,255,0.8);
@@ -63,22 +63,22 @@
   <!-- Current Period -->
   <div class="current-box" id="current-box">
     <h5>Current Period</h5>
-    <h3 id="current-period" class="mb-2">Loading...</h3>
+    <h3 id="current-period" class="mb-3">Loading...</h3>
     <div class="timer" id="timer">30</div>
     <small>seconds remaining</small>
   </div>
 
-  <!-- Current Period Result -->
+  <!-- Current Result -->
   <div class="result-box mb-4">
     <h5 class="text-warning mb-3">Current Period Result</h5>
     <div id="current-result" class="d-flex justify-content-center align-items-center gap-4"></div>
   </div>
 
   <div class="text-center mb-4">
-    <small id="status" class="text-success">Connected to Server</small>
+    <small id="status" class="text-success">Connecting to Server...</small>
   </div>
 
-  <!-- Recent Results -->
+  <!-- Recent History -->
   <h5 class="mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
@@ -89,31 +89,32 @@ const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePa
 
 let lastPeriod = null;
 
-async function fetchLive() {
+async function fetchData() {
   try {
-    const res = await fetch(API_URL + "?ts=" + Date.now());
-    const data = await res.json();
+    const response = await fetch(API_URL + "?ts=" + Date.now());
+    const data = await response.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
-      const latest = data.data.list[0];
+      const current = data.data.list[0];
 
-      // Show Current Period
-      document.getElementById("current-period").textContent = latest.issueNumber;
+      // Show Current Period Number
+      document.getElementById("current-period").textContent = current.issueNumber;
 
       // Show Result
-      showResult(latest);
+      showResult(current);
 
-      // Timer
-      if (lastPeriod !== latest.issueNumber) {
-        lastPeriod = latest.issueNumber;
+      // Timer for new period
+      if (lastPeriod !== current.issueNumber) {
+        lastPeriod = current.issueNumber;
         startTimer();
       }
 
       showHistory(data.data.list);
-      document.getElementById("status").innerHTML = "✅ Live Connected";
+      document.getElementById("status").innerHTML = "✅ Server Connected";
     }
-  } catch (e) {
-    document.getElementById("status").innerHTML = "❌ Connection Error";
+  } catch (error) {
+    document.getElementById("status").innerHTML = "❌ Server Connection Failed";
+    console.error(error);
   }
 }
 
@@ -121,7 +122,7 @@ function showResult(item) {
   document.getElementById("current-result").innerHTML = `
     <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
     <div>
-      <h4 class="mb-0">${item.color.toUpperCase()}</h4>
+      <h4>${item.color.toUpperCase()}</h4>
       <small>Premium: ${item.premium}</small>
     </div>
   `;
@@ -135,13 +136,13 @@ function getColorClass(color) {
 }
 
 function startTimer() {
-  if (window.timerInt) clearInterval(window.timerInt);
-  
+  if (window.timerInterval) clearInterval(window.timerInterval);
+
   let timeLeft = 30;
   const timerEl = document.getElementById("timer");
   const box = document.getElementById("current-box");
 
-  window.timerInt = setInterval(() => {
+  window.timerInterval = setInterval(() => {
     timeLeft--;
     timerEl.textContent = timeLeft;
 
@@ -152,7 +153,7 @@ function startTimer() {
     }
 
     if (timeLeft <= 0) {
-      fetchLive();
+      fetchData();
     }
   }, 1000);
 }
@@ -160,7 +161,7 @@ function startTimer() {
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
-  list.slice(1, 10).forEach(item => {
+  list.slice(1, 12).forEach(item => {
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
@@ -175,9 +176,9 @@ function showHistory(list) {
   });
 }
 
-// Auto Update
-setInterval(fetchLive, 3000);
-fetchLive();
+// Auto Refresh
+setInterval(fetchData, 3000);
+fetchData();
 </script>
 
 </body>
