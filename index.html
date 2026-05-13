@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Next Result</title>
+  <title>WinGo 30S - Timer + Result</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -13,37 +13,30 @@
       font-family: 'Segoe UI', sans-serif;
       min-height: 100vh;
     }
-    .next-period {
-      background: linear-gradient(90deg, #00ff88, #00cc66);
-      color: #000;
-      font-size: 26px;
+    .timer-box {
+      background: #ff0000;
+      color: white;
+      font-size: 32px;
       font-weight: bold;
-      padding: 18px;
+      padding: 15px;
       border-radius: 15px;
       text-align: center;
       margin-bottom: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
     }
     .main-result {
       background: rgba(0,0,0,0.85);
-      border: 5px solid #ffd700;
+      border: 6px solid #ffd700;
       border-radius: 25px;
       padding: 30px 20px;
       text-align: center;
-      margin-bottom: 25px;
     }
     .number-circle {
-      width: 155px;
-      height: 155px;
+      width: 160px; height: 160px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 72px;
-      font-weight: bold;
-      color: white;
-      margin: 20px auto;
-      box-shadow: 0 0 45px rgba(255,255,255,0.8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 75px; font-weight: bold;
+      color: white; margin: 20px auto;
+      box-shadow: 0 0 50px rgba(255,255,255,0.8);
     }
     .red { background: linear-gradient(45deg, #ff0000, #aa0000); }
     .green { background: linear-gradient(45deg, #00ff00, #008800); }
@@ -54,38 +47,36 @@
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">
-    <i class="fas fa-clock"></i> WinGo 30S - Next Period
-  </h1>
+  <h1 class="text-center mb-4 text-warning">WinGo 30S - Live Timer</h1>
 
-  <!-- Next Period -->
-  <div class="next-period" id="next-period">
-    Next Period : <span id="next-issue">Loading...</span>
+  <!-- Timer -->
+  <div class="timer-box" id="timer-box">
+    Next Result in: <span id="countdown">30</span>s
   </div>
 
-  <!-- Latest Result (Aage ke liye reference) -->
-  <div class="main-result">
-    <h5 class="text-warning mb-3">Latest Result</h5>
+  <!-- Latest Result -->
+  <div class="main-result mb-4" id="main-result">
+    <h5 class="text-warning">LATEST RESULT</h5>
     <div id="big-number" class="number-circle red">00</div>
-    <h2 id="color-name" class="text-uppercase fw-bold">RED</h2>
-    <h5 id="premium" class="text-warning">Premium : 0</h5>
+    <h2 id="color-name" class="text-uppercase">RED</h2>
+    <h5 id="premium">Premium : 0</h5>
   </div>
 
-  <div class="text-center mb-4">
-    <small class="text-success" id="last-updated">Connecting to Server...</small>
+  <div class="text-center mb-3">
+    <small id="period-info" class="text-success"></small>
   </div>
 
   <!-- History -->
-  <h5 class="mb-3 text-light"><i class="fas fa-history"></i> Recent Results</h5>
+  <h5 class="mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
 
 <script>
-// API Connect
 const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let results = [];
+let lastIssue = null;
+let countdownInterval = null;
 
 async function fetchResults() {
   try {
@@ -93,21 +84,28 @@ async function fetchResults() {
     const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
-      results = data.data.list;
-
-      // Show Latest Result
-      showLatestResult();
-
-      // Next Period Calculation (Current + 1)
-      showNextPeriod();
-
-      showHistory();
-      document.getElementById("last-updated").innerHTML = `✅ Server Connected • ${new Date().toLocaleTimeString()}`;
+      const current = data.data.list[0];
+      
+      // Agar naya result aaya hai to update karo
+      if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
+        lastIssue = current;
+        showLatestResult(current);
+        startCountdown();
+      }
+      
+      showHistory(data.data.list);
     }
   } catch (e) {
-    document.getElementById("last-updated").innerHTML = `❌ Connection Failed`;
     console.error(e);
   }
+}
+
+function showLatestResult(latest) {
+  document.getElementById("big-number").textContent = latest.number;
+  document.getElementById("big-number").className = `number-circle ${getColorClass(latest.color)}`;
+  document.getElementById("color-name").textContent = latest.color.toUpperCase();
+  document.getElementById("premium").innerHTML = `Premium : <strong>${latest.premium}</strong>`;
+  document.getElementById("period-info").textContent = `Period: ${latest.issueNumber}`;
 }
 
 function getColorClass(color) {
@@ -117,26 +115,36 @@ function getColorClass(color) {
   return "red";
 }
 
-function showLatestResult() {
-  const latest = results[0];
-  document.getElementById("big-number").textContent = latest.number;
-  document.getElementById("big-number").className = `number-circle ${getColorClass(latest.color)}`;
-  document.getElementById("color-name").textContent = latest.color.toUpperCase();
-  document.getElementById("premium").innerHTML = `Premium : <strong>${latest.premium}</strong>`;
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  let timeLeft = 30;   // WinGo 30S
+
+  countdownInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("countdown").textContent = timeLeft;
+
+    // 10 second pahle highlight
+    if (timeLeft <= 10) {
+      document.getElementById("timer-box").style.background = "#ffd700";
+      document.getElementById("timer-box").style.color = "#000";
+    } else {
+      document.getElementById("timer-box").style.background = "#ff0000";
+      document.getElementById("timer-box").style.color = "#fff";
+    }
+
+    if (timeLeft <= 0) {
+      document.getElementById("countdown").textContent = "00";
+      fetchResults();   // Naya result fetch karo
+    }
+  }, 1000);
 }
 
-function showNextPeriod() {
-  const latest = results[0];
-  const latestNum = parseInt(latest.issueNumber);
-  const nextNum = latestNum + 1;
-  document.getElementById("next-issue").textContent = nextNum;
-}
-
-function showHistory() {
+function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
 
-  results.slice(1, 11).forEach(item => {
+  list.slice(1, 11).forEach(item => {
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
@@ -151,9 +159,9 @@ function showHistory() {
   });
 }
 
-// Auto Refresh
+// Auto Fetch + Timer
 setInterval(fetchResults, 3000);
-fetchResults();
+fetchResults();   // First Load
 </script>
 
 </body>
