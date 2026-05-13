@@ -7,73 +7,114 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { background: linear-gradient(135deg, #0f0f1a, #1a0033); color: #fff; min-height: 100vh; }
-    .next-box { background: linear-gradient(90deg, #00ff88, #00aa66); color: #000; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
-    .timer { font-size: 45px; font-weight: bold; }
-    .warning { background: #ff4444 !important; color: white !important; animation: blink 1s infinite; }
+    body {
+      background: linear-gradient(135deg, #0f0f1a, #1a0033);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    .next-box {
+      background: linear-gradient(90deg, #00ff88, #00cc66);
+      color: #000;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+    }
+    .timer {
+      font-size: 52px;
+      font-weight: bold;
+      color: #000;
+    }
+    .warning {
+      background: #ff4444 !important;
+      color: white !important;
+      animation: blink 0.8s infinite;
+    }
     @keyframes blink { 50% { opacity: 0.7; } }
-    .number-circle { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 8px; }
+
+    .last-result {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid #ffd700;
+      border-radius: 12px;
+      padding: 15px;
+    }
+    .number-circle {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: bold;
+      color: white;
+      box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    }
     .red { background: #ff0000; }
     .green { background: #00cc00; }
-    .hot { background: #ffd700; color: black; }
+    .violet { background: #8a2be2; }
+    .hot { background: #ffd700; color: black; font-size: 28px; }
+
+    .card {
+      background: rgba(0,0,0,0.6);
+      border: none;
+    }
   </style>
 </head>
 <body>
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">WinGo 30S - Next Prediction</h1>
+  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S - Next Prediction</h1>
 
   <!-- Next Period -->
   <div class="next-box" id="next-box">
-    <h4>Next Period</h4>
-    <h2 id="next-period">Loading...</h2>
+    <h5>Next Period</h5>
+    <h3 id="next-period" class="mb-2">Loading...</h3>
     <div class="timer" id="timer">30</div>
+    <small>seconds remaining</small>
   </div>
 
   <!-- Last Result -->
-  <div class="text-center mb-4">
-    <h5>Last Result</h5>
+  <div class="last-result mb-4 text-center">
+    <h5 class="text-warning mb-2">Last Result</h5>
     <div id="last-result" class="d-flex justify-content-center align-items-center gap-3"></div>
   </div>
 
-  <!-- Prediction -->
-  <div class="card bg-dark mb-4">
-    <div class="card-body">
-      <h5 class="text-info">Suggested Next Number (Based on Trend)</h5>
-      <div id="prediction" class="text-center"></div>
+  <!-- Suggested Number -->
+  <div class="card mb-4">
+    <div class="card-body text-center">
+      <h5 class="text-info">Suggested Next Number (Trend Based)</h5>
+      <div id="prediction" class="my-3"></div>
     </div>
   </div>
 
-  <!-- Hot / Cold Numbers -->
-  <h5 class="mb-3">Hot & Cold Numbers (Missing Count)</h5>
-  <div id="trend" class="row g-2"></div>
+  <!-- Hot & Cold -->
+  <h5 class="mb-3 text-light">Hot & Cold Numbers (Missing Count)</h5>
+  <div id="trend" class="row g-3"></div>
 
   <!-- History -->
-  <h5 class="mt-4 mb-3">Recent Results</h5>
+  <h5 class="mt-4 mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
 
 <script>
-// API 1: History
+// APIs
 const HISTORY_API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-// API 2: Trend Statistics
 const TREND_API = "https://api.ar-lottery01.com/api/Lottery/GetTrendStatistics?gameCode=WinGo_30S&pageNo=1&pageSize=10&language=en";
 
 let lastIssue = null;
 
 async function fetchAll() {
   try {
-    const [histRes, trendRes] = await Promise.all([
+    const [hist, trend] = await Promise.all([
       fetch(HISTORY_API + "?ts=" + Date.now()),
       fetch(TREND_API)
     ]);
 
-    const histData = await histRes.json();
-    const trendData = await trendRes.json();
+    const histData = await hist.json();
+    const trendData = await trend.json();
 
-    if (histData.code === 0 && histData.data?.list?.length > 0) {
+    if (histData.code === 0 && histData.data?.list) {
       const current = histData.data.list[0];
       if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
         lastIssue = current;
@@ -87,65 +128,48 @@ async function fetchAll() {
       showTrend(trendData.data);
       showPrediction(trendData.data);
     }
-
-  } catch (e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
 
 function showLastResult(item) {
-  const container = document.getElementById("last-result");
-  container.innerHTML = `
+  document.getElementById("last-result").innerHTML = `
     <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
     <div>
-      <h5>${item.color.toUpperCase()}</h5>
+      <h5 class="mb-0">${item.color.toUpperCase()}</h5>
       <small>Premium: ${item.premium}</small>
     </div>
   `;
 }
 
-function getColorClass(color) {
-  if (color.includes("red")) return "red";
-  if (color.includes("green")) return "green";
-  if (color.includes("violet")) return "violet";
+function getColorClass(c) {
+  if (c.includes("red")) return "red";
+  if (c.includes("green")) return "green";
+  if (c.includes("violet")) return "violet";
   return "red";
+}
+
+function showPrediction(data) {
+  const sorted = [...data].sort((a,b) => b.missingCount - a.missingCount);
+  const due = sorted[0]; // Cold (Due)
+
+  document.getElementById("prediction").innerHTML = `
+    <div class="number-circle hot mx-auto mb-2">${due.number}</div>
+    <small class="text-warning">Missing ${due.missingCount} times → High Chance</small>
+  `;
 }
 
 function showTrend(data) {
   const container = document.getElementById("trend");
   container.innerHTML = "";
-
   data.forEach(item => {
-    const isHot = item.missingCount <= 5;
     const div = document.createElement("div");
-    div.className = "col-3 col-md-2 text-center";
+    div.className = "col-4 col-md-2 text-center";
     div.innerHTML = `
-      <div class="number-circle ${isHot ? 'hot' : 'red'}" style="font-size:24px">${item.number}</div>
-      <small>Missing: <b>${item.missingCount}</b></small>
+      <div class="number-circle ${item.missingCount > 15 ? 'hot' : 'red'}">${item.number}</div>
+      <small>Miss: <b>${item.missingCount}</b></small>
     `;
     container.appendChild(div);
   });
-}
-
-function showPrediction(data) {
-  // Sabse zyada missing wala (Cold) aur sabse kam missing wala (Hot)
-  const sorted = [...data].sort((a,b) => b.missingCount - a.missingCount);
-  const coldest = sorted[0];
-  const hottest = data.find(n => n.missingCount === Math.min(...data.map(d=>d.missingCount)));
-
-  document.getElementById("prediction").innerHTML = `
-    <div class="row text-center">
-      <div class="col-6">
-        <strong>Hot Number</strong><br>
-        <div class="number-circle hot mx-auto">${hottest.number}</div>
-      </div>
-      <div class="col-6">
-        <strong>Cold Number (Due)</strong><br>
-        <div class="number-circle red mx-auto">${coldest.number}</div>
-      </div>
-    </div>
-    <small class="text-warning">Suggestion: Try <b>${coldest.missingCount > 15 ? coldest.number : hottest.number}</b> this round</small>
-  `;
 }
 
 function startTimer() {
@@ -153,7 +177,7 @@ function startTimer() {
   const timerEl = document.getElementById("timer");
   const box = document.getElementById("next-box");
 
-  const int = setInterval(() => {
+  const intv = setInterval(() => {
     time--;
     timerEl.textContent = time;
 
@@ -161,7 +185,7 @@ function startTimer() {
     else box.classList.remove("warning");
 
     if (time <= 0) {
-      clearInterval(int);
+      clearInterval(intv);
       fetchAll();
     }
   }, 1000);
@@ -176,7 +200,7 @@ function showHistory(list) {
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:50px;height:50px;font-size:22px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
           ${item.number}
         </div>
       </div>
