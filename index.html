@@ -3,83 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Live</title>
+  <title>WinGo 30S - Smart Analysis</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body {
-      background: linear-gradient(135deg, #0f0f1a, #1a0033);
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      min-height: 100vh;
-    }
-    .current-box {
-      background: linear-gradient(90deg, #ffd700, #ffaa00);
-      color: #000;
-      padding: 20px;
-      border-radius: 16px;
-      text-align: center;
-      margin-bottom: 20px;
-      box-shadow: 0 0 35px rgba(255, 215, 0, 0.9);
-    }
-    .timer {
-      font-size: 65px;
-      font-weight: bold;
-    }
-    .warning {
-      background: #ff3333 !important;
-      color: white !important;
-      animation: blink 0.8s infinite;
-    }
+    body { background: linear-gradient(135deg, #0f0f1a, #1a0033); color: #fff; font-family: 'Segoe UI', sans-serif; }
+    .next-box { background: linear-gradient(90deg, #00ff88, #00cc66); color: #000; padding: 20px; border-radius: 18px; text-align: center; margin-bottom: 20px; }
+    .timer { font-size: 52px; font-weight: bold; }
+    .warning { animation: blink 0.8s infinite; background: #ff4444 !important; color: white !important; }
     @keyframes blink { 50% { opacity: 0.6; } }
-
-    .result-box {
-      background: rgba(0,0,0,0.85);
-      border: 4px solid #ffd700;
-      border-radius: 16px;
-      padding: 25px;
-      text-align: center;
-    }
-    .number-circle {
-      width: 130px; height: 130px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 60px; font-weight: bold;
-      color: white;
-      margin: 15px auto;
-      box-shadow: 0 0 40px rgba(255,255,255,0.8);
-    }
-    .red { background: linear-gradient(#ff0000, #cc0000); }
-    .green { background: linear-gradient(#00ff00, #00aa00); }
-    .violet { background: linear-gradient(#aa44ff, #6600cc); }
+    .number-circle { width: 130px; height: 130px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: bold; margin: 15px auto; box-shadow: 0 0 40px rgba(255,255,255,0.6); }
+    .red { background: linear-gradient(#ff0000, #aa0000); }
+    .green { background: linear-gradient(#00ff00, #008800); }
+    .violet { background: linear-gradient(#8a2be2, #4b0082); }
+    .analysis { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; }
   </style>
 </head>
 <body>
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning">🔥 WinGo 30S - Current Period</h1>
+  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S Smart Predict</h1>
 
-  <!-- Current Period -->
-  <div class="current-box" id="current-box">
-    <h5>Current Period</h5>
-    <h3 id="current-period" class="mb-3">Loading...</h3>
+  <!-- Next Period + Timer -->
+  <div class="next-box" id="next-box">
+    <h5>Next Period</h5>
+    <h3 id="next-period">Loading...</h3>
     <div class="timer" id="timer">30</div>
-    <small>seconds remaining</small>
+    <small>Seconds Remaining</small>
   </div>
 
-  <!-- Current Result -->
-  <div class="result-box mb-4">
-    <h5 class="text-warning mb-3">Current Period Result</h5>
-    <div id="current-result" class="d-flex justify-content-center align-items-center gap-4"></div>
-  </div>
-
+  <!-- Last Result -->
   <div class="text-center mb-4">
-    <small id="status" class="text-success">Connecting to Server...</small>
+    <h5>Last Result</h5>
+    <div id="big-number" class="number-circle red">00</div>
+    <h4 id="color-name">RED</h4>
+    <h5 id="premium">Premium : 0</h5>
   </div>
 
-  <!-- Recent History -->
-  <h5 class="mb-3 text-light">Recent Results</h5>
+  <!-- Smart Analysis -->
+  <div class="analysis mb-4">
+    <h5><i class="fas fa-chart-bar"></i> Quick Analysis</h5>
+    <div id="analysis" class="row text-center"></div>
+  </div>
+
+  <!-- History -->
+  <h5 class="mb-3 text-light">Recent 10 Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
@@ -87,45 +56,29 @@
 <script>
 const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let lastPeriod = null;
+let lastIssue = null;
+let timerInterval = null;
 
-async function fetchData() {
+async function fetchResults() {
   try {
-    const response = await fetch(API_URL + "?ts=" + Date.now());
-    const data = await response.json();
+    const res = await fetch(API_URL + "?ts=" + Date.now());
+    const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
       const current = data.data.list[0];
 
-      // Show Current Period Number
-      document.getElementById("current-period").textContent = current.issueNumber;
-
-      // Show Result
-      showResult(current);
-
-      // Timer for new period
-      if (lastPeriod !== current.issueNumber) {
-        lastPeriod = current.issueNumber;
+      if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
+        lastIssue = current;
+        showLastResult(current);
         startTimer();
       }
 
       showHistory(data.data.list);
-      document.getElementById("status").innerHTML = "✅ Server Connected";
+      showAnalysis(data.data.list);
     }
-  } catch (error) {
-    document.getElementById("status").innerHTML = "❌ Server Connection Failed";
-    console.error(error);
+  } catch (e) {
+    console.error(e);
   }
-}
-
-function showResult(item) {
-  document.getElementById("current-result").innerHTML = `
-    <div class="number-circle ${getColorClass(item.color)}">${item.number}</div>
-    <div>
-      <h4>${item.color.toUpperCase()}</h4>
-      <small>Premium: ${item.premium}</small>
-    </div>
-  `;
 }
 
 function getColorClass(color) {
@@ -135,39 +88,67 @@ function getColorClass(color) {
   return "red";
 }
 
+function showLastResult(item) {
+  document.getElementById("big-number").textContent = item.number;
+  document.getElementById("big-number").className = `number-circle ${getColorClass(item.color)}`;
+  document.getElementById("color-name").textContent = item.color.toUpperCase();
+  document.getElementById("premium").innerHTML = `Premium : <strong>${item.premium}</strong>`;
+  document.getElementById("next-period").textContent = (parseInt(item.issueNumber) + 1);
+}
+
 function startTimer() {
-  if (window.timerInterval) clearInterval(window.timerInterval);
+  if (timerInterval) clearInterval(timerInterval);
+  let time = 30;
 
-  let timeLeft = 30;
-  const timerEl = document.getElementById("timer");
-  const box = document.getElementById("current-box");
+  timerInterval = setInterval(() => {
+    time--;
+    document.getElementById("timer").textContent = time;
 
-  window.timerInterval = setInterval(() => {
-    timeLeft--;
-    timerEl.textContent = timeLeft;
-
-    if (timeLeft <= 10) {
-      box.classList.add("warning");
+    if (time <= 10) {
+      document.getElementById("next-box").classList.add("warning");
     } else {
-      box.classList.remove("warning");
+      document.getElementById("next-box").classList.remove("warning");
     }
 
-    if (timeLeft <= 0) {
-      fetchData();
-    }
+    if (time <= 0) fetchResults();
   }, 1000);
+}
+
+function showAnalysis(list) {
+  const container = document.getElementById("analysis");
+  container.innerHTML = "";
+
+  let red = 0, green = 0, violet = 0;
+  list.slice(0, 10).forEach(item => {
+    if (item.color.includes("red")) red++;
+    else if (item.color.includes("green")) green++;
+    else if (item.color.includes("violet")) violet++;
+  });
+
+  const stats = [
+    {color: "Red", count: red, class: "text-danger"},
+    {color: "Green", count: green, class: "text-success"},
+    {color: "Violet", count: violet, class: "text-purple"}
+  ];
+
+  stats.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "col-4";
+    div.innerHTML = `<h4 class="${s.class}">${s.count}</h4><small>${s.color}</small>`;
+    container.appendChild(div);
+  });
 }
 
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
-  list.slice(1, 12).forEach(item => {
+  list.slice(0, 10).forEach(item => {
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:52px;height:52px;font-size:24px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:50px;height:50px;font-size:22px;">
           ${item.number}
         </div>
       </div>
@@ -176,9 +157,9 @@ function showHistory(list) {
   });
 }
 
-// Auto Refresh
-setInterval(fetchData, 3000);
-fetchData();
+// Start
+setInterval(fetchResults, 3000);
+fetchResults();
 </script>
 
 </body>
