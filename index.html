@@ -11,45 +11,41 @@
       background: linear-gradient(135deg, #0f0f1a, #1a0033);
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
     }
-    .next-box {
+    .next-main {
       background: linear-gradient(90deg, #00ff88, #00cc66);
       color: #000;
-      font-size: 28px;
-      font-weight: bold;
-      padding: 20px;
-      border-radius: 15px;
+      padding: 25px;
+      border-radius: 20px;
       text-align: center;
-      margin-bottom: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 136, 0.7);
+      margin-bottom: 25px;
+      box-shadow: 0 0 35px rgba(0, 255, 136, 0.6);
     }
     .timer {
-      font-size: 42px;
+      font-size: 48px;
       font-weight: bold;
-      color: #ffd700;
     }
     .warning {
-      background: #ff0000 !important;
+      background: #ff4444 !important;
       color: white !important;
-      animation: blink 1s infinite;
+      animation: blink 0.8s infinite;
     }
-    @keyframes blink {
-      50% { opacity: 0.6; }
-    }
-    .main-result {
-      background: rgba(0,0,0,0.8);
-      border: 5px solid #ffd700;
-      border-radius: 20px;
-      padding: 25px;
+    @keyframes blink { 50% { opacity: 0.7; } }
+
+    .last-result {
+      background: rgba(0,0,0,0.7);
+      border: 3px solid #ffd700;
+      border-radius: 15px;
+      padding: 20px;
       text-align: center;
     }
     .number-circle {
-      width: 150px; height: 150px;
+      width: 110px; height: 110px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 70px; font-weight: bold;
-      margin: 15px auto;
-      box-shadow: 0 0 40px rgba(255,255,255,0.7);
+      font-size: 48px; font-weight: bold;
+      color: white; margin: 12px auto;
     }
     .red { background: linear-gradient(45deg, #ff0000, #aa0000); }
     .green { background: linear-gradient(45deg, #00ff00, #008800); }
@@ -60,24 +56,26 @@
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning"><i class="fas fa-clock"></i> WinGo 30S - Next Result</h1>
+  <h1 class="text-center mb-4 text-warning">WinGo 30S - Next Result</h1>
 
-  <!-- Next Period + Timer -->
-  <div class="next-box" id="next-box">
-    <div>Next Period : <span id="next-period">Loading...</span></div>
-    <div class="timer mt-2" id="timer">30s</div>
+  <!-- ==================== NEXT RESULT (Sabse Bada) ==================== -->
+  <div class="next-main" id="next-main">
+    <h4>Next Period</h4>
+    <h2 id="next-period" class="mb-3">Loading...</h2>
+    <div class="timer" id="timer">30</div>
+    <small id="timer-text">seconds remaining</small>
   </div>
 
-  <!-- Last Result -->
-  <div class="main-result mb-4">
-    <h5 class="text-warning mb-3">LAST RESULT</h5>
+  <!-- Last Result (Chhota) -->
+  <div class="last-result mb-4">
+    <h5 class="text-warning">Last Result</h5>
     <div id="big-number" class="number-circle red">00</div>
-    <h3 id="color-name" class="text-uppercase">RED</h3>
-    <h5 id="premium" class="text-warning">Premium : 0</h5>
+    <h5 id="color-name">RED</h5>
+    <small id="premium">Premium : 0</small>
   </div>
 
   <div class="text-center mb-4">
-    <small id="status" class="text-success">Connected to Server</small>
+    <small id="status" class="text-success">Connected</small>
   </div>
 
   <!-- History -->
@@ -89,36 +87,36 @@
 <script>
 const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let lastKnownIssue = null;
+let lastIssue = null;
 let timerInterval = null;
 
-async function fetchData() {
+async function fetchResults() {
   try {
     const res = await fetch(API_URL + "?ts=" + Date.now());
     const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
-      const latest = data.data.list[0];
+      const current = data.data.list[0];
 
-      if (!lastKnownIssue || lastKnownIssue.issueNumber !== latest.issueNumber) {
-        lastKnownIssue = latest;
-        showLastResult(latest);
-        startNextTimer();
+      if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
+        lastIssue = current;
+        showLastResult(current);
+        startTimer();
       }
 
       showHistory(data.data.list);
-      document.getElementById("status").textContent = "✅ Live Connected";
+      document.getElementById("status").innerHTML = "✅ Live";
     }
   } catch (e) {
-    document.getElementById("status").innerHTML = "❌ Connection Error";
+    document.getElementById("status").innerHTML = "❌ Error";
   }
 }
 
-function showLastResult(latest) {
-  document.getElementById("big-number").textContent = latest.number;
-  document.getElementById("big-number").className = `number-circle ${getColorClass(latest.color)}`;
-  document.getElementById("color-name").textContent = latest.color.toUpperCase();
-  document.getElementById("premium").innerHTML = `Premium : <strong>${latest.premium}</strong>`;
+function showLastResult(item) {
+  document.getElementById("big-number").textContent = item.number;
+  document.getElementById("big-number").className = `number-circle ${getColorClass(item.color)}`;
+  document.getElementById("color-name").textContent = item.color.toUpperCase();
+  document.getElementById("premium").innerHTML = `Premium : <strong>${item.premium}</strong>`;
 }
 
 function getColorClass(color) {
@@ -128,25 +126,23 @@ function getColorClass(color) {
   return "red";
 }
 
-function startNextTimer() {
+function startTimer() {
   if (timerInterval) clearInterval(timerInterval);
 
   let timeLeft = 30;
 
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById("timer").textContent = timeLeft + "s";
-
-    const nextBox = document.getElementById("next-box");
+    document.getElementById("timer").textContent = timeLeft;
 
     if (timeLeft <= 10) {
-      nextBox.classList.add("warning");
+      document.getElementById("next-main").classList.add("warning");
     } else {
-      nextBox.classList.remove("warning");
+      document.getElementById("next-main").classList.remove("warning");
     }
 
     if (timeLeft <= 0) {
-      fetchData();
+      fetchResults();
     }
   }, 1000);
 }
@@ -155,13 +151,13 @@ function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
 
-  list.slice(1, 10).forEach(item => {
+  list.slice(1, 12).forEach(item => {
     const div = document.createElement("div");
     div.className = "col";
     div.innerHTML = `
       <div class="text-center p-2 bg-dark rounded">
         <small>${item.issueNumber.slice(-6)}</small><br>
-        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:48px;height:48px;font-size:20px;">
+        <div class="number-circle ${getColorClass(item.color)} mx-auto" style="width:50px;height:50px;font-size:22px;">
           ${item.number}
         </div>
       </div>
@@ -170,9 +166,9 @@ function showHistory(list) {
   });
 }
 
-// Auto Refresh + Initial Load
-setInterval(fetchData, 3000);
-fetchData();
+// Auto Update
+setInterval(fetchResults, 3000);
+fetchResults();
 </script>
 
 </body>
