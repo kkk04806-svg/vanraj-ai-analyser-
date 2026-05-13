@@ -3,107 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WinGo 30S - Sure Shot Big/Small</title>
+  <title>WinGo 30S - Live Prediction</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body { background: linear-gradient(135deg, #0f0f1a, #1a0033); color: #fff; font-family: 'Segoe UI', sans-serif; }
-    .next-box { background: linear-gradient(90deg, #00ff88, #00cc66); color: #000; padding: 20px; border-radius: 18px; text-align: center; margin-bottom: 20px; }
-    .timer { font-size: 52px; font-weight: bold; }
-    .warning { background: #ff0000 !important; color: white !important; animation: blink 0.8s infinite; }
+    .current-period { background: #ffd700; color: #000; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 15px; }
+    .timer-box { background: #ff0000; color: white; padding: 20px; border-radius: 15px; text-align: center; font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+    .warning { animation: blink 0.8s infinite; }
     @keyframes blink { 50% { opacity: 0.6; } }
-    .number-circle { width: 135px; height: 135px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 62px; font-weight: bold; margin: 15px auto; box-shadow: 0 0 40px rgba(255,255,255,0.7); }
+    .number-circle { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 65px; font-weight: bold; margin: 15px auto; box-shadow: 0 0 40px rgba(255,255,255,0.7); }
     .red { background: linear-gradient(#ff0000, #aa0000); }
     .green { background: linear-gradient(#00ff00, #008800); }
     .violet { background: linear-gradient(#8a2be2, #4b0082); }
-    .sure { font-size: 26px; font-weight: bold; padding: 15px; border-radius: 12px; }
+    .prediction-box { font-size: 24px; font-weight: bold; padding: 18px; border-radius: 15px; }
   </style>
 </head>
 <body>
 
 <div class="container py-4">
 
-  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S Sure Shot</h1>
+  <h1 class="text-center mb-4 text-warning"><i class="fas fa-fire"></i> WinGo 30S Live Predict</h1>
 
-  <!-- Next Period -->
-  <div class="next-box" id="next-box">
-    <h5>NEXT PERIOD</h5>
-    <h3 id="next-period">Loading...</h3>
-    <div class="timer" id="timer">30</div>
-    <small>Seconds Remaining</small>
+  <!-- Current Running Period -->
+  <div class="current-period" id="current-period">
+    Current Period: <span id="current-issue">Loading...</span>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-box" id="timer-box">
+    <span id="timer">30</span>s
   </div>
 
   <!-- Last Result -->
   <div class="text-center mb-4">
     <h5>Last Result</h5>
-    <div id="big-number" class="number-circle red">00</div>
-    <h4 id="color-name">RED</h4>
-    <h5 id="premium">Premium : 0</h5>
+    <div id="last-number" class="number-circle red">00</div>
+    <h4 id="last-color">RED</h4>
   </div>
 
-  <!-- Sure Shot Prediction -->
-  <div class="sure bg-success text-center mb-4" id="sure-shot">
-    Waiting for Analysis...
+  <!-- Next Prediction -->
+  <div class="prediction-box bg-success text-center mb-4" id="prediction-box">
+    Analysing Next Result...
   </div>
 
   <!-- Big/Small Stats -->
   <div class="row text-center mb-4">
     <div class="col-6">
       <div class="p-3 bg-dark rounded">
-        <h4 id="big-count" class="text-warning">0</h4>
+        <h4 id="big-stat" class="text-warning">0</h4>
         <small>BIG (5-9)</small>
       </div>
     </div>
     <div class="col-6">
       <div class="p-3 bg-dark rounded">
-        <h4 id="small-count" class="text-info">0</h4>
+        <h4 id="small-stat" class="text-info">0</h4>
         <small>SMALL (0-4)</small>
       </div>
     </div>
   </div>
 
   <!-- History -->
-  <h5 class="mb-3">Recent Results</h5>
+  <h5 class="mb-3 text-light">Recent Results</h5>
   <div id="history" class="row row-cols-2 row-cols-md-5 g-3"></div>
 
 </div>
 
 <script>
-// Game API
-const GAME_API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-// Backend API (aapka server.js)
-const BACKEND_API = "http://localhost:3000/api/predict";
+const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
 
-let lastIssue = null;
+let currentIssue = null;
+let timerInterval = null;
 
-async function fetchGameData() {
+async function fetchLiveData() {
   try {
-    const res = await fetch(GAME_API + "?ts=" + Date.now());
+    const res = await fetch(API_URL + "?ts=" + Date.now());
     const data = await res.json();
 
     if (data.code === 0 && data.data?.list?.length > 0) {
-      const current = data.data.list[0];
+      const latest = data.data.list[0];
 
-      if (!lastIssue || lastIssue.issueNumber !== current.issueNumber) {
-        lastIssue = current;
-        showLastResult(current);
+      if (!currentIssue || currentIssue.issueNumber !== latest.issueNumber) {
+        currentIssue = latest;
+        showLastResult(latest);
         startTimer();
       }
 
       showHistory(data.data.list);
-      analyzeAndPredict(data.data.list);
+      predictNext(data.data.list);
     }
   } catch (e) {
-    console.error("Game API Error", e);
+    console.error(e);
   }
 }
 
 function showLastResult(item) {
-  document.getElementById("big-number").textContent = item.number;
-  document.getElementById("big-number").className = `number-circle ${getColorClass(item.color)}`;
-  document.getElementById("color-name").textContent = item.color.toUpperCase();
-  document.getElementById("premium").innerHTML = `Premium : <strong>${item.premium}</strong>`;
-  document.getElementById("next-period").textContent = (parseInt(item.issueNumber) + 1);
+  document.getElementById("current-issue").textContent = item.issueNumber;
+  document.getElementById("last-number").textContent = item.number;
+  document.getElementById("last-number").className = `number-circle ${getColorClass(item.color)}`;
+  document.getElementById("last-color").textContent = item.color.toUpperCase();
 }
 
 function getColorClass(color) {
@@ -114,66 +112,61 @@ function getColorClass(color) {
 }
 
 function startTimer() {
-  let time = 30;
-  const timerEl = document.getElementById("timer");
-  const box = document.getElementById("next-box");
+  if (timerInterval) clearInterval(timerInterval);
+  let timeLeft = 30;
 
-  const int = setInterval(() => {
-    time--;
-    timerEl.textContent = time;
-    if (time <= 10) box.classList.add("warning");
-    else box.classList.remove("warning");
-    if (time <= 0) {
-      clearInterval(int);
-      fetchGameData();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+
+    const box = document.getElementById("timer-box");
+    if (timeLeft <= 10) {
+      box.classList.add("warning");
+    } else {
+      box.classList.remove("warning");
     }
+
+    if (timeLeft <= 0) fetchLiveData();
   }, 1000);
 }
 
-async function analyzeAndPredict(list) {
+function predictNext(list) {
   const recent = list.slice(0, 20);
-  let big = 0, small = 0;
+  let bigCount = 0, smallCount = 0;
 
   recent.forEach(item => {
     const num = parseInt(item.number);
-    if (num >= 5) big++;
-    else small++;
+    if (num >= 5) bigCount++;
+    else smallCount++;
   });
 
-  const bigPer = Math.round((big / recent.length) * 100);
+  const bigPercent = Math.round((bigCount / recent.length) * 100);
 
-  document.getElementById("big-count").textContent = big;
-  document.getElementById("small-count").textContent = small;
+  let prediction = "";
+  let bgClass = "success";
 
-  // Send to your backend
-  try {
-    const response = await fetch(BACKEND_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        input: { big, small, bigPer, recentNumbers: recent.map(r => r.number) }
-      })
-    });
-
-    const backendData = await response.json();
-
-    let predictionText = bigPer >= 60 ? 
-      `🔥 BIG Strong (${bigPer}%)` : 
-      `🔥 SMALL Strong (${100 - bigPer}%)`;
-
-    document.getElementById("sure-shot").innerHTML = `
-      ${predictionText}<br>
-      <small>Backend Prediction: ${backendData.prediction || 'Processing...'}</small>
-    `;
-    document.getElementById("sure-shot").className = `sure bg-${bigPer >= 60 ? 'warning' : 'info'} text-center mb-4`;
-  } catch (e) {
-    console.log("Backend not running, using local analysis");
+  if (bigPercent >= 62) {
+    prediction = `🔥 BIG Expected<br><small>${bigPercent}% Chance</small>`;
+    bgClass = "warning";
+  } else if (bigPercent <= 38) {
+    prediction = `🔥 SMALL Expected<br><small>${100 - bigPercent}% Chance</small>`;
+  } else if (bigPercent > 50) {
+    prediction = `Slightly BIG (${bigPercent}%)`;
+  } else {
+    prediction = `Slightly SMALL (${100 - bigPercent}%)`;
   }
+
+  document.getElementById("prediction-box").innerHTML = prediction;
+  document.getElementById("prediction-box").className = `prediction-box bg-${bgClass} text-center mb-4`;
+
+  document.getElementById("big-stat").textContent = bigCount;
+  document.getElementById("small-stat").textContent = smallCount;
 }
 
 function showHistory(list) {
   const container = document.getElementById("history");
   container.innerHTML = "";
+
   list.slice(0, 10).forEach(item => {
     const num = parseInt(item.number);
     const div = document.createElement("div");
@@ -191,9 +184,9 @@ function showHistory(list) {
   });
 }
 
-// Auto Refresh
-setInterval(fetchGameData, 3000);
-fetchGameData();
+// Auto Update
+setInterval(fetchLiveData, 3000);
+fetchLiveData();
 </script>
 
 </body>
