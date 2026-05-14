@@ -1,41 +1,38 @@
-    return html;
-  }catch(e){
-    return `<h3>${escapeHtml(title)} (ts=${tsValue})</h3><p class="error">Error: ${escapeHtml(e.message)}</p>`;
+    }
+    out.innerHTML = html;
+    return;
   }
+
+  out.innerHTML = '<p class="small">No pasted responses — use Live fetch or paste responses.</p>';
+});
+
+async function fetchJson(ts){
+  const url = endpointRoot + '?ts=' + encodeURIComponent(String(ts));
+  const resp = await fetch(url, { method:'GET', credentials:'omit' });
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  return await resp.json();
 }
 
-document.getElementById('loadMinus').addEventListener('click', async () => {
-  resultsEl.innerHTML = '<p class="note">Loading...</p>';
-  const base = Number(baseInput.value) || Date.now();
-  const ts = base - 10;
-  try{
-    resultsEl.innerHTML = await fetchAndRender(ts, 'Response for ts - 10');
-  }catch(e){}
-});
-
-document.getElementById('loadPlus').addEventListener('click', async () => {
-  resultsEl.innerHTML = '<p class="note">Loading...</p>';
-  const base = Number(baseInput.value) || Date.now();
-  const ts = base + 1;
-  try{
-    resultsEl.innerHTML = await fetchAndRender(ts, 'Response for ts + 1');
-  }catch(e){}
-});
-
-document.getElementById('loadBoth').addEventListener('click', async () => {
-  resultsEl.innerHTML = '<p class="note">Loading both...</p>';
+document.getElementById('fetchLive').addEventListener('click', async ()=>{
+  out.innerHTML = '<p class="small">Attempting live fetch (ts-10 then ts+1)...</p>';
   const base = Number(baseInput.value) || Date.now();
   const ts1 = base - 10;
   const ts2 = base + 1;
-  const parts = [];
+  infoEl.innerHTML = `Original ts: <strong>${esc(base)}</strong> — Trying live fetch for ts-10: <strong>${esc(ts1)}</strong> and ts+1: <strong>${esc(ts2)}</strong>`;
+  let parts = '';
   try{
-    parts.push(await fetchAndRender(ts1, 'Response for ts - 10'));
-  }catch(e){ parts.push(`<h3>Response for ts - 10 (ts=${ts1})</h3><p class="error">Failed: ${escapeHtml(e.message)}</p>`) }
+    const j1 = await fetchJson(ts1);
+    const list1 = j1 && j1.data && j1.data.list ? j1.data.list : null;
+    parts += `<h3>Live: ts-10 (ts=${esc(ts1)})</h3>` + (list1 ? renderTable(list1) : `<pre class="json">${esc(JSON.stringify(j1, null,2))}</pre>`);
+  }catch(e){
+    parts += `<h3>Live: ts-10 (ts=${esc(ts1)})</h3><p class="error">Fetch failed: ${esc(e.message)}</p>`;
+  }
   try{
-    parts.push(await fetchAndRender(ts2, 'Response for ts + 1'));
-  }catch(e){ parts.push(`<h3>Response for ts + 1 (ts=${ts2})</h3><p class="error">Failed: ${escapeHtml(e.message)}</p>`) }
-  resultsEl.innerHTML = parts.join('');
+    const j2 = await fetchJson(ts2);
+    const list2 = j2 && j2.data && j2.data.list ? j2.data.list : null;
+    parts += `<h3>Live: ts+1 (ts=${esc(ts2)})</h3>` + (list2 ? renderTable(list2) : `<pre class="json">${esc(JSON.stringify(j2, null,2))}</pre>`);
+  }catch(e){
+    parts += `<h3>Live: ts+1 (ts=${esc(ts2)})</h3><p class="error">Fetch failed: ${esc(e.message)}</p>`;
+  }
+  out.innerHTML = parts;
 });
-
-// Optional: auto-run once on load for convenience
-// document.getElementById('loadBoth').click();
