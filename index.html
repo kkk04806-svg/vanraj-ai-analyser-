@@ -1,138 +1,174 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
-
-// Global variables
-let currentGame = null;
-let gameHistory = [];
-
-// ==================== FETCH FUNCTIONS ====================
-
-// Fetch Current Game State
-async function fetchGameState() {
-  try {
-    const res = await axios.get(`${BASE_URL}/1M.json?ts=${Date.now()}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
-      }
-    });
-    currentGame = res.data;
-    console.log(`✅ Current Period: ${currentGame?.issueNumber}`);
-    return currentGame;
-  } catch (error) {
-    console.error("Game State Error:", error.message);
-    return null;
-  }
-}
-
-// Fetch Latest History
-async function fetchHistory() {
-  try {
-    const res = await axios.get(`${BASE_URL}/GetHistory`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
-      }
-    });
-
-    if (res.data?.data?.list) {
-      gameHistory = res.data.data.list.map(item => ({
-        issueNumber: item.issueNumber,
-        number: parseInt(item.number),
-        color: item.color,
-        premium: item.premium
-      }));
-      console.log(`📜 History Updated: ${gameHistory.length} records`);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanraj 07 Analyser</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0b0e11, #1a1f2e);
+      color: #e9ecef;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    return gameHistory;
-  } catch (error) {
-    console.error("History Error:", error.message);
-    return [];
+    .card {
+      background: #1e2329;
+      border: 2px solid #f0b90b;
+      border-radius: 20px;
+      padding: 30px 25px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(240, 185, 11, 0.2);
+    }
+    h1 {
+      color: #f0b90b;
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+    input {
+      width: 100%;
+      padding: 15px;
+      background: #2b3139;
+      border: 1px solid #474d57;
+      color: white;
+      border-radius: 10px;
+      font-size: 17px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #f0b90b;
+      color: #000;
+      font-weight: bold;
+      padding: 15px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .result {
+      margin-top: 25px;
+      padding: 20px;
+      background: #2b3139;
+      border-radius: 12px;
+      display: none;
+      text-align: center;
+    }
+    .number {
+      font-size: 52px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .info {
+      font-size: 16px;
+      margin: 8px 0;
+    }
+    pre {
+      text-align: left;
+      font-size: 13px;
+      background: #000;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      max-height: 220px;
+      overflow: auto;
+      color: #b0b8c4;
+    }
+    .status {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #2ebd85;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>VANRAJ 07 ANALYSER</h1>
+  
+  <input type="text" id="periodInput" placeholder="Enter Period Number (e.g. 20260515100010189)" />
+  
+  <button onclick="getPrediction()">🔥 ANALYSE NOW</button>
+
+  <div id="resultBox" class="result">
+    <div style="color:#848e9c; font-size:14px;">PERIOD</div>
+    <div id="periodDisplay" style="font-weight:bold; color:#f0b90b; margin:8px 0; font-size:18px;"></div>
+    
+    <div id="mainResult" class="number">---</div>
+    <div id="subResult" class="info"></div>
+    
+    <pre id="rawData">// Analysis will appear here...</pre>
+  </div>
+
+  <div class="status" id="serverStatus">Server: Waiting...</div>
+</div>
+
+<script>
+async function getPrediction() {
+  const period = document.getElementById('periodInput').value.trim();
+  const resultBox = document.getElementById('resultBox');
+  const serverStatus = document.getElementById('serverStatus');
+
+  if (!period) {
+    alert("Please enter a valid Period Number!");
+    return;
+  }
+
+  resultBox.style.display = "block";
+  document.getElementById('mainResult').innerHTML = "Calculating...";
+  serverStatus.textContent = "Connecting to server...";
+
+  try {
+    // Change this URL if your server is on different port or hosted
+    const response = await fetch('http://localhost:3000/api/vanraj/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ period: period })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      const p = data.prediction;
+      const colorCode = p.color === "RED" ? "#f6465d" : 
+                       p.color === "GREEN" ? "#2ebd85" : "#c76cff";
+
+      document.getElementById('periodDisplay').innerText = data.period;
+      document.getElementById('mainResult').innerHTML = `${p.size} <span style="font-size:28px">(${p.number})</span>`;
+      document.getElementById('mainResult').style.color = colorCode;
+      document.getElementById('subResult').innerHTML = `🎨 Color: <b>${p.color}</b><br>📏 Size: <b>${p.size}</b><br>✅ Accuracy: ${p.accuracy}`;
+      document.getElementById('rawData').innerText = JSON.stringify(data, null, 2);
+      
+      serverStatus.textContent = "✅ Server Connected";
+      serverStatus.style.color = "#2ebd85";
+    } else {
+      throw new Error(data.message || "Invalid response");
+    }
+  } catch (err) {
+    document.getElementById('mainResult').innerHTML = "❌ ERROR";
+    document.getElementById('rawData').innerText = "Server not running or wrong port.\n\n1. Run: node server.js\n2. Check port 3000";
+    serverStatus.textContent = "❌ Server Not Running";
+    serverStatus.style.color = "#f6465d";
   }
 }
 
-// ==================== ROUTES ====================
-
-app.get('/', (req, res) => {
-  res.json({
-    status: 'Vanraj WinGo 1M Backend',
-    online: true,
-    currentPeriod: currentGame?.issueNumber,
-    time: new Date().toISOString()
-  });
+// Allow Enter key to analyse
+document.getElementById('periodInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') getPrediction();
 });
+</script>
 
-// Get Current Game
-app.get('/api/game/current', async (req, res) => {
-  if (!currentGame) await fetchGameState();
-
-  const now = Date.now();
-  const endTime = new Date(currentGame?.endTime).getTime();
-  const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
-
-  res.json({
-    success: true,
-    current: currentGame,
-    remainingSeconds,
-    isOpen: remainingSeconds > 5,
-    note: "WinGo 1M Live"
-  });
-});
-
-// Get History
-app.get('/api/game/history', (req, res) => {
-  res.json({
-    success: true,
-    history: gameHistory.slice(0, 15) // Last 15 results
-  });
-});
-
-// Place Bet
-app.post('/api/game/bet', (req, res) => {
-  const { userId, amount, color, number } = req.body;
-
-  if (!userId || !amount || amount <= 0) {
-    return res.status(400).json({ success: false, msg: "Invalid bet data" });
-  }
-
-  res.json({
-    success: true,
-    betId: `BET_${Date.now()}`,
-    period: currentGame?.issueNumber,
-    amount,
-    color,
-    number,
-    message: "Bet placed successfully!"
-  });
-});
-
-// Get Latest Result
-app.get('/api/game/result', async (req, res) => {
-  await fetchGameState();
-  await fetchHistory();
-
-  res.json({
-    success: true,
-    latest: gameHistory[0] || null,
-    note: "Official WinGo 1M Result"
-  });
-});
-
-// ==================== AUTO REFRESH ====================
-setInterval(() => {
-  fetchGameState();
-  fetchHistory();
-}, 3000); // Every 3 seconds
-
-// Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`🚀 Vanraj WinGo 1M Server Running on port ${PORT}`);
-  await fetchGameState();
-  await fetchHistory();
-});
+</body>
+</html>
