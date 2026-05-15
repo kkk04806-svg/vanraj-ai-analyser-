@@ -1,38 +1,134 @@
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
+
+// Game State + History
+let currentGame = null;
+let gameHistory = [];
+
+// Fetch Current Game State (Period, Timer)
+async function fetchGameState() {
+  try {
+    const ts = Date.now();
+    const res = await axios.get(`${BASE_URL}/WinGo_1M.json?ts=${ts}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36' }
+    });
+
+    if (res.data.current) {
+      currentGame = res.data;
+      console.log(`📍 Current Period: ${currentGame.current.issueNumber} | State: ${currentGame.state}`);
+      return currentGame;
     }
-    out.innerHTML = html;
-    return;
+  } catch (e) {
+    console.error("Game State Error:", e.message);
   }
-
-  out.innerHTML = '<p class="small">No pasted responses — use Live fetch or paste responses.</p>';
-});
-
-async function fetchJson(ts){
-  const url = endpointRoot + '?ts=' + encodeURIComponent(String(ts));
-  const resp = await fetch(url, { method:'GET', credentials:'omit' });
-  if(!resp.ok) throw new Error('HTTP ' + resp.status);
-  return await resp.json();
+  return null;
 }
 
-document.getElementById('fetchLive').addEventListener('click', async ()=>{
-  out.innerHTML = '<p class="small">Attempting live fetch (ts-10 then ts+1)...</p>';
-  const base = Number(baseInput.value) || Date.now();
-  const ts1 = base - 10;
-  const ts2 = base + 1;
-  infoEl.innerHTML = `Original ts: <strong>${esc(base)}</strong> — Trying live fetch for ts-10: <strong>${esc(ts1)}</strong> and ts+1: <strong>${esc(ts2)}</strong>`;
-  let parts = '';
-  try{
-    const j1 = await fetchJson(ts1);
-    const list1 = j1 && j1.data && j1.data.list ? j1.data.list : null;
-    parts += `<h3>Live: ts-10 (ts=${esc(ts1)})</h3>` + (list1 ? renderTable(list1) : `<pre class="json">${esc(JSON.stringify(j1, null,2))}</pre>`);
-  }catch(e){
-    parts += `<h3>Live: ts-10 (ts=${esc(ts1)})</h3><p class="error">Fetch failed: ${esc(e.message)}</p>`;
+// Fetch Latest Results
+async function fetchHistory() {
+  try {
+    const ts = Date.now();
+    const res = await axios.get(`${BASE_URL}/WinGo_1M/GetHistoryIssuePage.json?ts=${ts}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36' }
+    });
+
+    if (res.data.code === 0 && res.data.data?.list) {
+      gameHistory = res.data.data.list.map(item => ({
+        issueNumber: item.issueNumber,
+        number: parseInt(item.number),
+        color: item.color,
+        premium: item.premium
+      }));
+
+      return gameHistory[0]; // Latest result
+    }
+  } catch (e) {
+    console.error("History Error:", e.message);
   }
-  try{
-    const j2 = await fetchJson(ts2);
-    const list2 = j2 && j2.data && j2.data.list ? j2.data.list : null;
-    parts += `<h3>Live: ts+1 (ts=${esc(ts2)})</h3>` + (list2 ? renderTable(list2) : `<pre class="json">${esc(JSON.stringify(j2, null,2))}</pre>`);
-  }catch(e){
-    parts += `<h3>Live: ts+1 (ts=${esc(ts2)})</h3><p class="error">Fetch failed: ${esc(e.message)}</p>`;
+  return null;
+}
+
+// ==================== ROUTES ====================
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Vanraj Predict Backend - WinGo 1M Live',
+    currentPeriod: currentGame?.current?.issueNumber,
+    time: new Date().toISOString()
+  });
+});
+
+// Get Current Game Info (Timer + Period)
+app.get('/api/game/current', async (req, res) => {
+  await fetchGameState();
+  if (!currentGame) return res.status(500).json({ success: false, msg: "Failed to load game" });
+
+  const now = Date.now();
+  const endTime = currentGame.current.endTime;
+  const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+  res.json({
+    success: true,
+    current: currentGame.current,
+    previous: currentGame.previous,
+    state: currentGame.state,           // 1 = Betting Open
+    remainingSeconds: remaining,
+    isOpen: remaining > 5
+  });
+});
+
+// Get Latest Result
+app.get('/api/game/result', async (req, res) => {
+  const latest = await fetchHistory();
+  res.json({
+    success: true,
+    result: latest,
+    note: "Official WinGo 1M Result"
+  });
+});
+
+// Get History
+app.get('/api/game/history', async (req, res) => {
+  await fetchHistory();
+  res.json({
+    success: true,
+    history: gameHistory.slice(0, 15)
+  });
+});
+
+// Place Bet
+app.post('/api/game/bet', (req, res) => {
+  const { userId, amount, color, number } = req.body;
+
+  if (!userId || !amount || amount <= 0) {
+    return res.status(400).json({ success: false, msg: "Invalid bet" });
   }
-  out.innerHTML = parts;
+
+  res.json({
+    success: true,
+    betId: `BET_${Date.now()}`,
+    period: currentGame?.current?.issueNumber,
+    message: "Bet placed successfully"
+  });
+});
+
+// Auto refresh every 3 seconds
+setInterval(() => {
+  fetchGameState();
+  fetchHistory();
+}, 3000);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`🚀 WinGo 1M Server Running on port ${PORT}`);
+  
+  await fetchGameState();
+  await fetchHistory();
 });
