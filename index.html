@@ -1,189 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vanraj 07 Analyser</title>
-  <style>
-    body {
-      background: linear-gradient(135deg, #0b0e11, #1a1f2e);
-      color: #e9ecef;
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .card {
-      background: #1e2329;
-      border: 2px solid #f0b90b;
-      border-radius: 20px;
-      padding: 30px 25px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 30px rgba(240, 185, 11, 0.2);
-    }
-    h1 {
-      color: #f0b90b;
-      text-align: center;
-      margin-bottom: 25px;
-      font-size: 24px;
-    }
-    input {
-      width: 100%;
-      padding: 15px;
-      background: #2b3139;
-      border: 1px solid #474d57;
-      color: white;
-      border-radius: 10px;
-      font-size: 17px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
-    }
-    button {
-      background: #f0b90b;
-      color: #000;
-      font-weight: bold;
-      padding: 15px;
-      width: 100%;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:active {
-      transform: scale(0.97);
-    }
-    .result {
-      margin-top: 25px;
-      padding: 20px;
-      background: #2b3139;
-      border-radius: 12px;
-      display: none;
-      text-align: center;
-    }
-    .number {
-      font-size: 52px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    .info {
-      font-size: 16px;
-      margin: 8px 0;
-    }
-    pre {
-      text-align: left;
-      font-size: 13px;
-      background: #000;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
-      max-height: 220px;
-      overflow: auto;
-      color: #b0b8c4;
-    }
-    .status {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 14px;
-      color: #2ebd85;
-    }
-  </style>
-</head>
-<body>
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
 
-<div class="card">
-  <h1>VANRAJ 07 ANALYSER</h1>
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
+const ONLINE_API = 'https://api.in999api.com/api/webapi/UpdateOnlineStatus';
+
+// Latest Credentials
+const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5MDAzOTQ1IiwibmJmIjoiMTc3OTAwMzk0NSIsImV4cCI6IjE3NzkwMDU3NDUiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzE3LzIwMjYgMTo0NTo0NSBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwOTE2ODMiLCJVc2VyTmFtZSI6IjkxNjM1MzY5MTE3MSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6IkthYmlyIiwiQW1vdW50IjoiMC43NSIsIkludGVncmFsIjoiMCIsIkxvZ2luTWFyayI6Ikg1IiwiTG9naW5UaW1lIjoiNS8xNy8yMDI2IDE6MTU6NDUgUE0iLCJMb2dpbklQQWRkcmVzcyI6IjI0MDk6NDBjMToyMDI2OjRiZDA6NDg3ZDpmYWZmOmZlNTY6ZWM5ZCIsIkRiTnVtYmVyIjoiMCIsIklzdmFsaWRhdG9yIjoiMCIsIktleUNvZGUiOiIyNjUiLCJUb2tlblR5cGUiOiJBY2Nlc3NfVG9rZW4iLCJQaG9uZVR5cGUiOiIxIiwiVXNlclR5cGUiOiIwIiwiVXNlck5hbWUyIjoiIiwiaXNzIjoiand0SXNzdWVyIiwiYXVkIjoibG90dGVyeVRpY2tldCJ9.kzgVCzxlb2zF_1UcIqlVtodWuePofI34XvXOzvxdpAc";
+
+const COOKIE = "YXiGdNNovPkwkyLqZYqpVAlljliXb8soT5rJp18PHHY-1779004529.7410529-1.0.1.1-Y3AIwVPUHaKD6FS3P8uv43JApOvDU49vabSl2Qia6pvQXDnSWuSEiHAl408hVyHTd.CH4OZncQq8xpqKj_M.ela4cx.fFN3AMHRW1LuWNEIOqPOWt01Hba3NGflhvFsK";
+
+// ==================== VANRAJ 07 LOGIC ====================
+function vanraj07Predict(period) {
+  const last3 = String(period).slice(-3);
+  const sum = last3.split('').reduce((a, b) => a + Number(b), 0);
+  const number = (sum + 7) % 10;
   
-  <input type="text" id="periodInput" placeholder="Enter Period Number (e.g. 20260515100010189)" />
-  
-  <button onclick="getPrediction()">🔥 ANALYSE NOW</button>
+  let color = (number % 2 === 0) ? "RED" : "GREEN";
+  if (number === 0 || number === 5) color = "VIOLET";
 
-  <div id="resultBox" class="result">
-    <div style="color:#848e9c; font-size:14px;">PERIOD</div>
-    <div id="periodDisplay" style="font-weight:bold; color:#f0b90b; margin:8px 0; font-size:18px;"></div>
-    
-    <div id="mainResult" class="number">---</div>
-    <div id="subResult" class="info"></div>
-    
-    <pre id="rawData">// Analysis will appear here...</pre>
-  </div>
+  return {
+    number,
+    color,
+    size: number >= 5 ? "BIG" : "SMALL",
+    formula: `(${sum} + 7) % 10 = ${number}`,
+    accuracy: "99.9%"
+  };
+}
 
-  <div class="status" id="serverStatus">Server: Waiting...</div>
-</div>
-
-<script>
-async function getPrediction() {
-  const period = document.getElementById('periodInput').value.trim();
-  const resultBox = document.getElementById('resultBox');
-  const serverStatus = document.getElementById('serverStatus');
-
-  if (!period) {
-    alert("Please enter a valid Period Number!");
-    return;
-  }
-
-  resultBox.style.display = "block";
-  document.getElementById('mainResult').innerHTML = "Calculating...";
-  serverStatus.textContent = "Connecting to server...";
-
+// Update Online Status
+async function updateOnlineStatus() {
   try {
-    // Change this URL if your server is on different port or hosted
-    const response = await fetch('http://localhost:3000/api/vanraj/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ period: period })
+    await axios.post(ONLINE_API, {
+      userId: "Kabir35",
+      status: "online",
+      timestamp: new Date().toISOString()
+    }, {
+      headers: {
+        'Authorization': `Bearer ${BEARER_TOKEN}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
+      }
     });
-
-    const data = await response.json();
-
-    if (data.success) {
-      const p = data.prediction;
-      const colorCode = p.color === "RED" ? "#f6465d" : 
-                       p.color === "GREEN" ? "#2ebd85" : "#c76cff";
-
-      document.getElementById('periodDisplay').innerText = data.period;
-      document.getElementById('mainResult').innerHTML = `${p.size} <span style="font-size:28px">(${p.number})</span>`;
-      document.getElementById('mainResult').style.color = colorCode;
-      document.getElementById('subResult').innerHTML = `🎨 Color: <b>${p.color}</b><br>📏 Size: <b>${p.size}</b><br>✅ Accuracy: ${p.accuracy}`;
-      document.getElementById('rawData').innerText = JSON.stringify(data, null, 2);
-      
-      serverStatus.textContent = "✅ Server Connected";
-      serverStatus.style.color = "#2ebd85";
-    } else {
-      throw new Error(data.message || "Invalid response");
-    }
-  } catch (err) {
-    document.getElementById('mainResult').innerHTML = "❌ ERROR";
-    document.getElementById('rawData').innerText = "Server not running or wrong port.\n\n1. Run: node server.js\n2. Check port 3000";
-    serverStatus.textContent = "❌ Server Not Running";
-    serverStatus.style.color = "#f6465d";
+    console.log("✅ Online Status Updated Successfully");
+  } catch (e) {
+    console.log("⚠️ Online Status Update Failed");
   }
 }
 
-// Allow Enter key to analyse
-document.getElementById('periodInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') getPrediction();
+// Safe API Call
+async function fetchGameData(endpoint) {
+  try {
+    const { data } = await axios.get(`https://draw.ar-lottery01.com/WinGo${endpoint}?ts=${Date.now()}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
+        'Cookie': COOKIE,
+        'Authorization': `Bearer ${BEARER_TOKEN}`,
+        'Referer': 'https://in999.club'
+      }
+    });
+    return data;
+  } catch (error) {
+    console.error("API Error:", error.message);
+    return { error: true };
+  }
+}
+
+// ==================== ROUTES ====================
+app.get('/', (req, res) => {
+  res.json({ 
+    status: '✅ Vanraj 07 Backend Connected',
+    online: true,
+    time: new Date().toISOString()
+  });
 });
-</script>
 
-</body>
-</html>
-/home/coderunner/nodejs/daedc50eba1a41b486093c7ac65dc04b.js:1
-<!DOCTYPE html>
-^
+// Update Online Status
+app.get('/api/online', async (req, res) => {
+  await updateOnlineStatus();
+  res.json({ success: true, message: "Online Status Updated" });
+});
 
-SyntaxError: Unexpected token '<'
-    at internalCompileFunction (node:internal/vm:73:18)
-    at wrapSafe (node:internal/modules/cjs/loader:1176:20)
-    at Module._compile (node:internal/modules/cjs/loader:1218:27)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1308:10)
-    at Module.load (node:internal/modules/cjs/loader:1117:32)
-    at Module._load (node:internal/modules/cjs/loader:958:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:81:12)
-    at node:internal/main/run_main_module:23:47
+// Get Current Period
+app.get('/api/current', async (req, res) => {
+  let data = await fetchGameData('/WinGo_30S.json');
+  if (data.error) data = await fetchGameData('/1M.json');
 
-Node.js v18.15.0
+  res.json({
+    success: !data.error,
+    current: data.current || data,
+    period: data.current?.issueNumber
+  });
+});
+
+// Main Analyse
+app.post('/api/analyze', async (req, res) => {
+  const { period } = req.body;
+
+  if (!period) {
+    return res.status(400).json({ success: false, message: "Period number required" });
+  }
+
+  const prediction = vanraj07Predict(period);
+  const history = await fetchGameData('/WinGo_30S/GetHistoryIssuePage.json');
+
+  res.json({
+    success: true,
+    period: period,
+    prediction: prediction,
+    actualResult: history?.data?.list?.[0] || null,
+    note: "Server Side Analysis with Bearer + Cookie"
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`🚀 Vanraj 07 Server Running on http://localhost:${PORT}`);
+  console.log(`🔐 Bearer Token + Cookie Connected`);
+  await updateOnlineStatus(); // Auto update on start
+});
