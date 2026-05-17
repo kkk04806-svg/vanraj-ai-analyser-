@@ -1,71 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vanraj 07 Live</title>
-  <style>
-    body { background:#0b0e11; color:#e9ecef; font-family:sans-serif; padding:20px; }
-    .card { background:#1e2329; border:3px solid #f0b90b; border-radius:20px; padding:25px; max-width:500px; margin:auto; }
-    input, button { width:100%; padding:15px; margin:10px 0; border-radius:12px; font-size:17px; }
-    input { background:#2b3139; border:1px solid #474d57; color:white; }
-    button { background:#f0b90b; color:black; font-weight:bold; border:none; cursor:pointer; }
-    .result { margin-top:20px; padding:20px; background:#2b3139; border-radius:12px; display:none; }
-    .number { font-size:60px; font-weight:bold; margin:10px 0; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>999 Club WinGo API Connect</title>
 </head>
 <body>
+  <h1>999 Club WinGo API Connect</h1>
+  <button onclick="loadData()">Load History</button>
+  <pre id="output"></pre>
 
-<div class="card">
-  <h1 style="color:#f0b90b; text-align:center;">VANRAJ 07 LIVE</h1>
-  <input type="text" id="periodInput" placeholder="Period Number" />
-  <button onclick="getCurrent()">🌐 LIVE CURRENT PERIOD</button>
-  <button onclick="analyze()" style="background:#2ebd85;">🔥 ANALYSE NOW</button>
-
-  <div id="resultBox" class="result">
-    <div id="periodDisplay" style="color:#f0b90b; font-size:18px; font-weight:bold;"></div>
-    <div id="prediction" class="number">---</div>
-    <div id="details"></div>
-  </div>
-</div>
-
-<script>
-const SERVER = "http://localhost:3000";
-
-async function getCurrent() {
-  try {
-    const res = await fetch(`${SERVER}/api/current`);
-    const data = await res.json();
-    if (data.current?.issueNumber) {
-      document.getElementById('periodInput').value = data.current.issueNumber;
-      analyze();
+  <script>
+    async function loadData() {
+      const url = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=' + Date.now();
+      const res = await fetch(url);
+      const data = await res.json();
+      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
     }
-  } catch(e) { alert("Server chal nahi raha"); }
-}
-
-async function analyze() {
-  const period = document.getElementById('periodInput').value.trim();
-  if (!period) return alert("Period daalo");
-
-  const box = document.getElementById('resultBox');
-  box.style.display = "block";
-
-  try {
-    const res = await fetch(`${SERVER}/api/analyze`, {
-      method: 'POST',
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ period })
-    });
-    const data = await res.json();
-
-    const p = data.prediction;
-    document.getElementById('periodDisplay').innerText = data.period;
-    document.getElementById('prediction').innerHTML = `${p.size} (${p.number})`;
-    document.getElementById('details').innerHTML = `Color: <b>${p.color}</b> | Size: <b>${p.size}</b>`;
-  } catch(e) {
-    alert("Server se connect failed");
-  }
-}
-</script>
+  </script>
 </body>
 </html>
