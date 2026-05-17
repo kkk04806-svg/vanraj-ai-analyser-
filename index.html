@@ -1,125 +1,71 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanraj 07 Live</title>
+  <style>
+    body { background:#0b0e11; color:#e9ecef; font-family:sans-serif; padding:20px; }
+    .card { background:#1e2329; border:3px solid #f0b90b; border-radius:20px; padding:25px; max-width:500px; margin:auto; }
+    input, button { width:100%; padding:15px; margin:10px 0; border-radius:12px; font-size:17px; }
+    input { background:#2b3139; border:1px solid #474d57; color:white; }
+    button { background:#f0b90b; color:black; font-weight:bold; border:none; cursor:pointer; }
+    .result { margin-top:20px; padding:20px; background:#2b3139; border-radius:12px; display:none; }
+    .number { font-size:60px; font-weight:bold; margin:10px 0; }
+  </style>
+</head>
+<body>
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+<div class="card">
+  <h1 style="color:#f0b90b; text-align:center;">VANRAJ 07 LIVE</h1>
+  <input type="text" id="periodInput" placeholder="Period Number" />
+  <button onclick="getCurrent()">🌐 LIVE CURRENT PERIOD</button>
+  <button onclick="analyze()" style="background:#2ebd85;">🔥 ANALYSE NOW</button>
 
-const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
-const ONLINE_API = 'https://api.in999api.com/api/webapi/UpdateOnlineStatus';
+  <div id="resultBox" class="result">
+    <div id="periodDisplay" style="color:#f0b90b; font-size:18px; font-weight:bold;"></div>
+    <div id="prediction" class="number">---</div>
+    <div id="details"></div>
+  </div>
+</div>
 
-// Latest Credentials
-const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5MDAzOTQ1IiwibmJmIjoiMTc3OTAwMzk0NSIsImV4cCI6IjE3NzkwMDU3NDUiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzE3LzIwMjYgMTo0NTo0NSBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwOTE2ODMiLCJVc2VyTmFtZSI6IjkxNjM1MzY5MTE3MSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6IkthYmlyIiwiQW1vdW50IjoiMC43NSIsIkludGVncmFsIjoiMCIsIkxvZ2luTWFyayI6Ikg1IiwiTG9naW5UaW1lIjoiNS8xNy8yMDI2IDE6MTU6NDUgUE0iLCJMb2dpbklQQWRkcmVzcyI6IjI0MDk6NDBjMToyMDI2OjRiZDA6NDg3ZDpmYWZmOmZlNTY6ZWM5ZCIsIkRiTnVtYmVyIjoiMCIsIklzdmFsaWRhdG9yIjoiMCIsIktleUNvZGUiOiIyNjUiLCJUb2tlblR5cGUiOiJBY2Nlc3NfVG9rZW4iLCJQaG9uZVR5cGUiOiIxIiwiVXNlclR5cGUiOiIwIiwiVXNlck5hbWUyIjoiIiwiaXNzIjoiand0SXNzdWVyIiwiYXVkIjoibG90dGVyeVRpY2tldCJ9.kzgVCzxlb2zF_1UcIqlVtodWuePofI34XvXOzvxdpAc";
+<script>
+const SERVER = "http://localhost:3000";
 
-const COOKIE = "YXiGdNNovPkwkyLqZYqpVAlljliXb8soT5rJp18PHHY-1779004529.7410529-1.0.1.1-Y3AIwVPUHaKD6FS3P8uv43JApOvDU49vabSl2Qia6pvQXDnSWuSEiHAl408hVyHTd.CH4OZncQq8xpqKj_M.ela4cx.fFN3AMHRW1LuWNEIOqPOWt01Hba3NGflhvFsK";
-
-// ==================== VANRAJ 07 LOGIC ====================
-function vanraj07Predict(period) {
-  const last3 = String(period).slice(-3);
-  const sum = last3.split('').reduce((a, b) => a + Number(b), 0);
-  const number = (sum + 7) % 10;
-  
-  let color = (number % 2 === 0) ? "RED" : "GREEN";
-  if (number === 0 || number === 5) color = "VIOLET";
-
-  return {
-    number,
-    color,
-    size: number >= 5 ? "BIG" : "SMALL",
-    formula: `(${sum} + 7) % 10 = ${number}`,
-    accuracy: "99.9%"
-  };
-}
-
-// Update Online Status
-async function updateOnlineStatus() {
+async function getCurrent() {
   try {
-    await axios.post(ONLINE_API, {
-      userId: "Kabir35",
-      status: "online",
-      timestamp: new Date().toISOString()
-    }, {
-      headers: {
-        'Authorization': `Bearer ${BEARER_TOKEN}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
-      }
-    });
-    console.log("✅ Online Status Updated Successfully");
-  } catch (e) {
-    console.log("⚠️ Online Status Update Failed");
-  }
+    const res = await fetch(`${SERVER}/api/current`);
+    const data = await res.json();
+    if (data.current?.issueNumber) {
+      document.getElementById('periodInput').value = data.current.issueNumber;
+      analyze();
+    }
+  } catch(e) { alert("Server chal nahi raha"); }
 }
 
-// Safe API Call
-async function fetchGameData(endpoint) {
+async function analyze() {
+  const period = document.getElementById('periodInput').value.trim();
+  if (!period) return alert("Period daalo");
+
+  const box = document.getElementById('resultBox');
+  box.style.display = "block";
+
   try {
-    const { data } = await axios.get(`https://draw.ar-lottery01.com/WinGo${endpoint}?ts=${Date.now()}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
-        'Cookie': COOKIE,
-        'Authorization': `Bearer ${BEARER_TOKEN}`,
-        'Referer': 'https://in999.club'
-      }
+    const res = await fetch(`${SERVER}/api/analyze`, {
+      method: 'POST',
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ period })
     });
-    return data;
-  } catch (error) {
-    console.error("API Error:", error.message);
-    return { error: true };
+    const data = await res.json();
+
+    const p = data.prediction;
+    document.getElementById('periodDisplay').innerText = data.period;
+    document.getElementById('prediction').innerHTML = `${p.size} (${p.number})`;
+    document.getElementById('details').innerHTML = `Color: <b>${p.color}</b> | Size: <b>${p.size}</b>`;
+  } catch(e) {
+    alert("Server se connect failed");
   }
 }
-
-// ==================== ROUTES ====================
-app.get('/', (req, res) => {
-  res.json({ 
-    status: '✅ Vanraj 07 Backend Connected',
-    online: true,
-    time: new Date().toISOString()
-  });
-});
-
-// Update Online Status
-app.get('/api/online', async (req, res) => {
-  await updateOnlineStatus();
-  res.json({ success: true, message: "Online Status Updated" });
-});
-
-// Get Current Period
-app.get('/api/current', async (req, res) => {
-  let data = await fetchGameData('/WinGo_30S.json');
-  if (data.error) data = await fetchGameData('/1M.json');
-
-  res.json({
-    success: !data.error,
-    current: data.current || data,
-    period: data.current?.issueNumber
-  });
-});
-
-// Main Analyse
-app.post('/api/analyze', async (req, res) => {
-  const { period } = req.body;
-
-  if (!period) {
-    return res.status(400).json({ success: false, message: "Period number required" });
-  }
-
-  const prediction = vanraj07Predict(period);
-  const history = await fetchGameData('/WinGo_30S/GetHistoryIssuePage.json');
-
-  res.json({
-    success: true,
-    period: period,
-    prediction: prediction,
-    actualResult: history?.data?.list?.[0] || null,
-    note: "Server Side Analysis with Bearer + Cookie"
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`🚀 Vanraj 07 Server Running on http://localhost:${PORT}`);
-  console.log(`🔐 Bearer Token + Cookie Connected`);
-  await updateOnlineStatus(); // Auto update on start
-});
+</script>
+</body>
+</html>
