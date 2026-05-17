@@ -3,46 +3,136 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>in.999 Club WinGo Analyzer</title>
+  <title>Live Sarovar Connector Result</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:20px}
-    .wrap{max-width:1100px;margin:auto}
-    h1{font-size:26px;margin-bottom:10px}
-    .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:16px}
-    button{background:#2563eb;color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer}
-    button:hover{background:#1d4ed8}
-    input{padding:10px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e2e8f0;width:320px;max-width:100%}
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-    .stat{background:#0b1220;border:1px solid #334155;border-radius:10px;padding:12px}
-    table{width:100%;border-collapse:collapse;margin-top:10px;overflow:hidden}
-    th,td{border-bottom:1px solid #334155;padding:10px;text-align:left;font-size:14px}
-    th{background:#1e293b}
-    tr:hover{background:#1f2937}
-    .red{color:#f87171}
-    .green{color:#4ade80}
-    .violet{color:#c084fc}
-    .small{background:#38bdf8;color:#000;padding:2px 8px;border-radius:999px}
-    .big{background:#f59e0b;color:#000;padding:2px 8px;border-radius:999px}
-    .msg{color:#fbbf24;margin-top:8px}
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      margin: 0;
+      padding: 20px;
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: auto;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 26px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .box {
+      background: #0b1220;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .box strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 4px;
+    }
+    input, button {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 14px;
+    }
+    input {
+      width: min(800px, 100%);
+      background: #0b1220;
+      color: #e2e8f0;
+    }
+    button {
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      border: 0;
+      margin-left: 8px;
+    }
+    button:hover { background: #1d4ed8; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .status {
+      margin-top: 10px;
+      color: #fbbf24;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #334155;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #1e293b;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover {
+      background: #1f2937;
+    }
+    .red { color: #f87171; }
+    .green { color: #4ade80; }
+    .violet { color: #c084fc; }
+    .small, .big {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+    }
+    .small { background: #38bdf8; }
+    .big { background: #f59e0b; }
+    .latest {
+      font-size: 18px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>999 Club WinGo Analyzer</h1>
+    <h1>Live Sarovar Connector Result</h1>
 
     <div class="card">
-      <input id="apiUrl" value="https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" />
-      <button onclick="loadData()">Load API</button>
-      <div id="status" class="msg"></div>
+      <div class="controls">
+        <input id="apiUrl" value="https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" />
+        <button onclick="startLive()">Start Live</button>
+        <button onclick="stopLive()">Stop</button>
+        <button onclick="loadOnce()">Refresh Now</button>
+      </div>
+      <div class="status" id="status">Idle</div>
     </div>
 
-    <div class="stats card">
-      <div class="stat">Total Records: <strong id="totalRecords">0</strong></div>
-      <div class="stat">Red: <strong id="redCount">0</strong></div>
-      <div class="stat">Green: <strong id="greenCount">0</strong></div>
-      <div class="stat">Violet: <strong id="violetCount">0</strong></div>
-      <div class="stat">Big: <strong id="bigCount">0</strong></div>
-      <div class="stat">Small: <strong id="smallCount">0</strong></div>
+    <div class="row">
+      <div class="box">Latest Issue <strong id="latestIssue">-</strong></div>
+      <div class="box">Latest Number <strong id="latestNumber">-</strong></div>
+      <div class="box">Latest Color <strong id="latestColor">-</strong></div>
+      <div class="box">Red <strong id="redCount">0</strong></div>
+      <div class="box">Green <strong id="greenCount">0</strong></div>
+      <div class="box">Violet <strong id="violetCount">0</strong></div>
     </div>
 
     <div class="card">
@@ -56,69 +146,87 @@
             <th>Big/Small</th>
           </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="tbody"></tbody>
       </table>
     </div>
   </div>
 
   <script>
-    function bigSmall(n){ return Number(n) >= 5 ? "Big" : "Small"; }
+    let timer = null;
 
-    function loadData() {
-      const status = document.getElementById("status");
-      status.textContent = "Loading...";
-      const base = document.getElementById("apiUrl").value.trim();
-      const url = base + Date.now();
-
-      fetch(url)
-        .then(r => r.json())
-        .then(res => {
-          if (!res || !res.data || !Array.isArray(res.data.list)) {
-            status.textContent = "Invalid API response";
-            return;
-          }
-
-          const list = res.data.list;
-          document.getElementById("totalRecords").textContent = list.length;
-
-          let red = 0, green = 0, violet = 0, big = 0, small = 0;
-          const tbody = document.getElementById("tableBody");
-          tbody.innerHTML = "";
-
-          list.forEach(item => {
-            const colors = (item.color || "").split(",");
-            if (colors.includes("red")) red++;
-            if (colors.includes("green")) green++;
-            if (colors.includes("violet")) violet++;
-
-            if (bigSmall(item.number) === "Big") big++;
-            else small++;
-
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${item.issueNumber || ""}</td>
-              <td>${item.number || ""}</td>
-              <td class="${(item.color || '').includes('red') ? 'red' : (item.color || '').includes('green') ? 'green' : 'violet'}">${item.color || ""}</td>
-              <td>${item.premium || ""}</td>
-              <td><span class="${bigSmall(item.number) === 'Big' ? 'big' : 'small'}">${bigSmall(item.number)}</span></td>
-            `;
-            tbody.appendChild(tr);
-          });
-
-          document.getElementById("redCount").textContent = red;
-          document.getElementById("greenCount").textContent = green;
-          document.getElementById("violetCount").textContent = violet;
-          document.getElementById("bigCount").textContent = big;
-          document.getElementById("smallCount").textContent = small;
-          status.textContent = "Loaded successfully";
-        })
-        .catch(err => {
-          console.error(err);
-          status.textContent = "Fetch error: " + err.message;
-        });
+    function bigSmall(n) {
+      return Number(n) >= 5 ? "Big" : "Small";
     }
 
-    loadData();
+    async function fetchData() {
+      const base = document.getElementById("apiUrl").value.trim();
+      const url = base + Date.now();
+      const res = await fetch(url);
+      const json = await res.json();
+      return json?.data?.list || [];
+    }
+
+    async function render() {
+      const status = document.getElementById("status");
+      try {
+        status.textContent = "Loading live data...";
+        const list = await fetchData();
+        if (!list.length) {
+          status.textContent = "No data found";
+          return;
+        }
+
+        document.getElementById("latestIssue").textContent = list[0].issueNumber || "-";
+        document.getElementById("latestNumber").textContent = list[0].number || "-";
+        document.getElementById("latestColor").textContent = list[0].color || "-";
+
+        let red = 0, green = 0, violet = 0;
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
+
+        list.forEach(item => {
+          const colorText = item.color || "";
+          if (colorText.includes("red")) red++;
+          if (colorText.includes("green")) green++;
+          if (colorText.includes("violet")) violet++;
+
+          const cls = colorText.includes("red") ? "red" : colorText.includes("green") ? "green" : "violet";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${item.issueNumber || ""}</td>
+            <td>${item.number || ""}</td>
+            <td class="${cls}">${colorText}</td>
+            <td>${item.premium || ""}</td>
+            <td><span class="${bigSmall(item.number) === "Big" ? "big" : "small"}">${bigSmall(item.number)}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("redCount").textContent = red;
+        document.getElementById("greenCount").textContent = green;
+        document.getElementById("violetCount").textContent = violet;
+        status.textContent = "Updated at " + new Date().toLocaleTimeString();
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+      }
+    }
+
+    function startLive() {
+      stopLive();
+      render();
+      timer = setInterval(render, 3000);
+      document.getElementById("status").textContent = "Live mode started";
+    }
+
+    function stopLive() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      document.getElementById("status").textContent = "Live mode stopped";
+    }
+
+    function loadOnce() {
+      render();
+    }
   </script>
 </body>
 </html>
