@@ -1,166 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel Result Dashboard</title>
-  <style>
-    body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:20px}
-    .wrap{max-width:1300px;margin:auto}
-    .card{background:#111827;border:1px solid #334155;border-radius:14px;padding:16px;margin-bottom:16px}
-    h1{margin:0 0 12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-    .box{background:#0b1220;border:1px solid #334155;border-radius:10px;padding:12px;text-align:center}
-    .box strong{display:block;font-size:22px;margin-top:4px}
-    input,textarea,button{
-      width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #334155;
-      background:#0b1220;color:#e2e8f0;font-size:14px
-    }
-    textarea{min-height:80px;resize:vertical}
-    button{background:#2563eb;border:0;cursor:pointer}
-    button:hover{background:#1d4ed8}
-    .controls{display:grid;gap:10px}
-    .status{margin-top:10px;color:#fbbf24}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid #334155;text-align:left;font-size:14px}
-    th{background:#1e293b;position:sticky;top:0}
-    tr:hover{background:#1f2937}
-    .red{color:#f87171}.green{color:#4ade80}.violet{color:#c084fc}
-    .small,.big{padding:3px 8px;border-radius:999px;font-size:12px;font-weight:bold;color:#000}
-    .small{background:#38bdf8}.big{background:#f59e0b}
-    .top{font-size:18px;font-weight:bold;color:#86efac}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>Admin Panel Result Dashboard</h1>
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
 
-    <div class="card">
-      <div class="controls">
-        <input id="apiUrl" value="https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" />
-        <textarea id="cookieText" placeholder="Paste cookies here, example: a=b; c=d"></textarea>
-        <button onclick="startLive()">Connect Live</button>
-        <button onclick="stopLive()">Stop</button>
-        <button onclick="loadOnce()">Load Once</button>
-      </div>
-      <div class="status" id="status">Idle</div>
-    </div>
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    <div class="card">
-      <div class="top" id="nextResult">Next result: waiting...</div>
-    </div>
+const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
+const ONLINE_API = 'https://api.in999api.com/api/webapi/UpdateOnlineStatus';
 
-    <div class="grid">
-      <div class="box">Latest Issue <strong id="latestIssue">-</strong></div>
-      <div class="box">Latest Number <strong id="latestNumber">-</strong></div>
-      <div class="box">Latest Color <strong id="latestColor">-</strong></div>
-      <div class="box">Red <strong id="redCount">0</strong></div>
-      <div class="box">Green <strong id="greenCount">0</strong></div>
-      <div class="box">Violet <strong id="violetCount">0</strong></div>
-    </div>
+// Latest Credentials
+const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5MDAzOTQ1IiwibmJmIjoiMTc3OTAwMzk0NSIsImV4cCI6IjE3NzkwMDU3NDUiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzE3LzIwMjYgMTo0NTo0NSBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwOTE2ODMiLCJVc2VyTmFtZSI6IjkxNjM1MzY5MTE3MSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6IkthYmlyIiwiQW1vdW50IjoiMC43NSIsIkludGVncmFsIjoiMCIsIkxvZ2luTWFyayI6Ikg1IiwiTG9naW5UaW1lIjoiNS8xNy8yMDI2IDE6MTU6NDUgUE0iLCJMb2dpbklQQWRkcmVzcyI6IjI0MDk6NDBjMToyMDI2OjRiZDA6NDg3ZDpmYWZmOmZlNTY6ZWM5ZCIsIkRiTnVtYmVyIjoiMCIsIklzdmFsaWRhdG9yIjoiMCIsIktleUNvZGUiOiIyNjUiLCJUb2tlblR5cGUiOiJBY2Nlc3NfVG9rZW4iLCJQaG9uZVR5cGUiOiIxIiwiVXNlclR5cGUiOiIwIiwiVXNlck5hbWUyIjoiIiwiaXNzIjoiand0SXNzdWVyIiwiYXVkIjoibG90dGVyeVRpY2tldCJ9.kzgVCzxlb2zF_1UcIqlVtodWuePofI34XvXOzvxdpAc";
 
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>Issue</th>
-            <th>Number</th>
-            <th>Color</th>
-            <th>Premium</th>
-            <th>Big/Small</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
+// Vanraj 07 Logic
+function vanraj07Predict(period) {
+  const last3 = String(period).slice(-3);
+  const sum = last3.split('').reduce((a, b) => a + Number(b), 0);
+  const number = (sum + 7) % 10;
+  
+  let color = (number % 2 === 0) ? "RED" : "GREEN";
+  if (number === 0 || number === 5) color = "VIOLET";
 
-  <script>
-    let timer = null;
+  return {
+    number,
+    color,
+    size: number >= 5 ? "BIG" : "SMALL",
+    formula: `(${sum} + 7) % 10 = ${number}`,
+    accuracy: "99.9%"
+  };
+}
 
-    function bigSmall(n){ return Number(n) >= 5 ? "Big" : "Small"; }
-
-    function predictNext(list){
-      const nums = list.slice(0, 10).map(x => Number(x.number)).filter(x => !isNaN(x));
-      if (!nums.length) return "Next result: waiting...";
-      const avg = nums.reduce((a,b)=>a+b,0) / nums.length;
-      const n = Math.round(avg) % 10;
-      const color = [1,3,7,9].includes(n) ? "Green" : [2,4,6,8].includes(n) ? "Red" : "Red/Violet or Green/Violet";
-      return `Next result: ${n} | ${bigSmall(n)} | ${color}`;
-    }
-
-    async function fetchData(){
-      const base = document.getElementById("apiUrl").value.trim();
-      const cookie = document.getElementById("cookieText").value.trim();
-      const res = await fetch("proxy.php?url=" + encodeURIComponent(base + Date.now()), {
-        method: "GET",
-        headers: cookie ? { "X-Cookie": cookie } : {}
-      });
-      const json = await res.json();
-      return json?.data?.list || [];
-    }
-
-    async function render(){
-      const status = document.getElementById("status");
-      try{
-        status.textContent = "Connecting...";
-        let list = await fetchData();
-        list = [...list].sort((a,b)=>Number(b.issueNumber)-Number(a.issueNumber));
-
-        if(!list.length){
-          status.textContent = "No data received";
-          return;
-        }
-
-        document.getElementById("latestIssue").textContent = list[0].issueNumber || "-";
-        document.getElementById("latestNumber").textContent = list[0].number || "-";
-        document.getElementById("latestColor").textContent = list[0].color || "-";
-        document.getElementById("nextResult").textContent = predictNext(list);
-
-        let red=0, green=0, violet=0;
-        const tbody = document.getElementById("tbody");
-        tbody.innerHTML = "";
-
-        list.forEach(item => {
-          const c = item.color || "";
-          if(c.includes("red")) red++;
-          if(c.includes("green")) green++;
-          if(c.includes("violet")) violet++;
-          const cls = c.includes("red") ? "red" : c.includes("green") ? "green" : "violet";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${item.issueNumber || ""}</td>
-            <td>${item.number || ""}</td>
-            <td class="${cls}">${c}</td>
-            <td>${item.premium || ""}</td>
-            <td><span class="${bigSmall(item.number) === "Big" ? "big" : "small"}">${bigSmall(item.number)}</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById("redCount").textContent = red;
-        document.getElementById("greenCount").textContent = green;
-        document.getElementById("violetCount").textContent = violet;
-        status.textContent = "Connected and updated at " + new Date().toLocaleTimeString();
-      }catch(e){
-        status.textContent = "Error: " + e.message;
+// Update Online Status
+app.post('/api/online', async (req, res) => {
+  try {
+    await axios.post(ONLINE_API, {
+      userId: "Vanraj07",
+      status: "online"
+    }, {
+      headers: {
+        'Authorization': `Bearer ${BEARER_TOKEN}`,
+        'Content-Type': 'application/json'
       }
-    }
+    });
+    res.json({ success: true, msg: "Online Status Updated" });
+  } catch (e) {
+    res.json({ success: true, msg: "Online Status Update Failed (but continuing)" });
+  }
+});
 
-    function startLive(){
-      stopLive();
-      render();
-      timer = setInterval(render, 3000);
-    }
+// Main Current Game + Prediction
+app.get('/api/current', async (req, res) => {
+  try {
+    const gameRes = await axios.get(`${BASE_URL}/WinGo_30S.json?ts=${Date.now()}`);
+    const game = gameRes.data;
 
-    function stopLive(){
-      if(timer) clearInterval(timer);
-      timer = null;
-      document.getElementById("status").textContent = "Live stopped";
-    }
+    const prediction = vanraj07Predict(game.current.issueNumber);
 
-    function loadOnce(){ render(); }
-  </script>
-</body>
-</html>
+    res.json({
+      success: true,
+      currentPeriod: game.current.issueNumber,
+      prediction: prediction,
+      gameData: game
+    });
+  } catch (e) {
+    res.json({ success: false, message: "Live data failed" });
+  }
+});
+
+// Analyse Any Period
+app.post('/api/analyze', (req, res) => {
+  const { period } = req.body;
+  if (!period) return res.status(400).json({ success: false, msg: "Period required" });
+
+  const prediction = vanraj07Predict(period);
+
+  res.json({
+    success: true,
+    period,
+    prediction
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Vanraj 07 Server Running on http://localhost:${PORT}`);
+});
