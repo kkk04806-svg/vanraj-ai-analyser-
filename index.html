@@ -1,87 +1,63 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const BASE_URL = 'https://draw.ar-lottery01.com/WinGo';
-const ONLINE_API = 'https://api.in999api.com/api/webapi/UpdateOnlineStatus';
-
-// Latest Credentials
-const BEARER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5MDAzOTQ1IiwibmJmIjoiMTc3OTAwMzk0NSIsImV4cCI6IjE3NzkwMDU3NDUiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzE3LzIwMjYgMTo0NTo0NSBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwOTE2ODMiLCJVc2VyTmFtZSI6IjkxNjM1MzY5MTE3MSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6IkthYmlyIiwiQW1vdW50IjoiMC43NSIsIkludGVncmFsIjoiMCIsIkxvZ2luTWFyayI6Ikg1IiwiTG9naW5UaW1lIjoiNS8xNy8yMDI2IDE6MTU6NDUgUE0iLCJMb2dpbklQQWRkcmVzcyI6IjI0MDk6NDBjMToyMDI2OjRiZDA6NDg3ZDpmYWZmOmZlNTY6ZWM5ZCIsIkRiTnVtYmVyIjoiMCIsIklzdmFsaWRhdG9yIjoiMCIsIktleUNvZGUiOiIyNjUiLCJUb2tlblR5cGUiOiJBY2Nlc3NfVG9rZW4iLCJQaG9uZVR5cGUiOiIxIiwiVXNlclR5cGUiOiIwIiwiVXNlck5hbWUyIjoiIiwiaXNzIjoiand0SXNzdWVyIiwiYXVkIjoibG90dGVyeVRpY2tldCJ9.kzgVCzxlb2zF_1UcIqlVtodWuePofI34XvXOzvxdpAc";
-
-// Vanraj 07 Logic
-function vanraj07Predict(period) {
-  const last3 = String(period).slice(-3);
-  const sum = last3.split('').reduce((a, b) => a + Number(b), 0);
-  const number = (sum + 7) % 10;
-  
-  let color = (number % 2 === 0) ? "RED" : "GREEN";
-  if (number === 0 || number === 5) color = "VIOLET";
-
-  return {
-    number,
-    color,
-    size: number >= 5 ? "BIG" : "SMALL",
-    formula: `(${sum} + 7) % 10 = ${number}`,
-    accuracy: "99.9%"
-  };
-}
-
-// Update Online Status
-app.post('/api/online', async (req, res) => {
-  try {
-    await axios.post(ONLINE_API, {
-      userId: "Vanraj07",
-      status: "online"
-    }, {
-      headers: {
-        'Authorization': `Bearer ${BEARER_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    res.json({ success: true, msg: "Online Status Updated" });
-  } catch (e) {
-    res.json({ success: true, msg: "Online Status Update Failed (but continuing)" });
-  }
-});
-
-// Main Current Game + Prediction
-app.get('/api/current', async (req, res) => {
-  try {
-    const gameRes = await axios.get(`${BASE_URL}/WinGo_30S.json?ts=${Date.now()}`);
-    const game = gameRes.data;
-
-    const prediction = vanraj07Predict(game.current.issueNumber);
-
-    res.json({
-      success: true,
-      currentPeriod: game.current.issueNumber,
-      prediction: prediction,
-      gameData: game
-    });
-  } catch (e) {
-    res.json({ success: false, message: "Live data failed" });
-  }
-});
-
-// Analyse Any Period
-app.post('/api/analyze', (req, res) => {
-  const { period } = req.body;
-  if (!period) return res.status(400).json({ success: false, msg: "Period required" });
-
-  const prediction = vanraj07Predict(period);
-
-  res.json({
-    success: true,
-    period,
-    prediction
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Vanraj 07 Server Running on http://localhost:${PORT}`);
-});
+<!DOCTYPE html>
+<html lang="en" translate="no">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/favico.ico" />
+		<meta name="google" content="notranslate" />
+		<meta name="robots" content="noindex,nofollow" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		
+		<title>lottery</title>
+		<script type="module" crossorigin src="/assets/js/index-a074d728.js"></script>
+		<link rel="modulepreload" crossorigin href="/assets/js/common.modules-e356ba24.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/page-turntable-assets-d6267459.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/native/index-3e972ace.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/en-14ec46c6.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-ActivityDetail-66e7f1a5.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-Bonus-b27e68c6.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-DailySignIn-a0ddecfd.js">
+		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-FirstRecharge-ec3be711.js">
+		
+		<link rel="stylesheet" href="/assets/css/common-7beda9ad.css">
+		<link rel="stylesheet" href="/assets/css/page-activity-ActivityDetail-a597c4a3.css">
+		<link rel="stylesheet" href="/assets/css/page-activity-Bonus-608b6579.css">
+		<link rel="stylesheet" href="/assets/css/page-activity-DailySignIn-4105a2b0.css">
+		<link rel="stylesheet" href="/assets/css/page-activity-FirstRecharge-1994fe55.css">
+		<link rel="stylesheet" href="/assets/css/index-5dc86462.css">
+		
+		<script>
+			window.CONFIG = Object.freeze({
+				"VITE_API_URL": "https://91clubapi.com",
+				"VITE_BASE_LANGUAGE": "en",
+				"VITE_BASE_DOLLARSIGN": "₹",
+				"VITE_BASE_AREACODE": "+91",
+				"VITE_BASE_DICTIONARY": "{\"+91\":\"10\"}",
+				"VITE_BASE_LANGUAGES": "en|hd",
+				"VITE_BASE_PROJECTLOGO": "",
+				"VITE_BASE_HEADLOGO": "",
+				"VITE_BASE_PROJECTNAME": "91club",
+				"VITE_BASE_CURRENCY": "INR",
+				"VITE_BASE_UPPERORLOWER": "0",
+				"VITE_POINT": "91club",
+				"VITE_HOME": "redHome",
+				"VITE_MAINCOLOR": "redStyle",
+				"VITE_GTAG_ID": "G-D75GWCWX6C",
+				"BASE_URL": "/",
+				"MODE": "production",
+				"DEV": true,
+				"PROD": false
+			});
+		</script>
+		<script src="/web/config?_key=ar048"></script>
+		
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-D75GWCWX6C"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){ dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'G-D75GWCWX6C');
+		</script>
+	</head>
+	<body>
+		</body>
+</html>
