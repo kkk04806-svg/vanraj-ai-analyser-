@@ -1,63 +1,118 @@
 <!DOCTYPE html>
-<html lang="en" translate="no">
-	<head>
-		<meta charset="UTF-8" />
-		<link rel="icon" type="image/svg+xml" href="/favico.ico" />
-		<meta name="google" content="notranslate" />
-		<meta name="robots" content="noindex,nofollow" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		
-		<title>lottery</title>
-		<script type="module" crossorigin src="/assets/js/index-a074d728.js"></script>
-		<link rel="modulepreload" crossorigin href="/assets/js/common.modules-e356ba24.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/page-turntable-assets-d6267459.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/native/index-3e972ace.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/en-14ec46c6.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-ActivityDetail-66e7f1a5.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-Bonus-b27e68c6.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-DailySignIn-a0ddecfd.js">
-		<link rel="modulepreload" crossorigin href="/assets/js/page-activity-FirstRecharge-ec3be711.js">
-		
-		<link rel="stylesheet" href="/assets/css/common-7beda9ad.css">
-		<link rel="stylesheet" href="/assets/css/page-activity-ActivityDetail-a597c4a3.css">
-		<link rel="stylesheet" href="/assets/css/page-activity-Bonus-608b6579.css">
-		<link rel="stylesheet" href="/assets/css/page-activity-DailySignIn-4105a2b0.css">
-		<link rel="stylesheet" href="/assets/css/page-activity-FirstRecharge-1994fe55.css">
-		<link rel="stylesheet" href="/assets/css/index-5dc86462.css">
-		
-		<script>
-			window.CONFIG = Object.freeze({
-				"VITE_API_URL": "https://91clubapi.com",
-				"VITE_BASE_LANGUAGE": "en",
-				"VITE_BASE_DOLLARSIGN": "₹",
-				"VITE_BASE_AREACODE": "+91",
-				"VITE_BASE_DICTIONARY": "{\"+91\":\"10\"}",
-				"VITE_BASE_LANGUAGES": "en|hd",
-				"VITE_BASE_PROJECTLOGO": "",
-				"VITE_BASE_HEADLOGO": "",
-				"VITE_BASE_PROJECTNAME": "91club",
-				"VITE_BASE_CURRENCY": "INR",
-				"VITE_BASE_UPPERORLOWER": "0",
-				"VITE_POINT": "91club",
-				"VITE_HOME": "redHome",
-				"VITE_MAINCOLOR": "redStyle",
-				"VITE_GTAG_ID": "G-D75GWCWX6C",
-				"BASE_URL": "/",
-				"MODE": "production",
-				"DEV": true,
-				"PROD": false
-			});
-		</script>
-		<script src="/web/config?_key=ar048"></script>
-		
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-D75GWCWX6C"></script>
-		<script>
-			window.dataLayer = window.dataLayer || [];
-			function gtag(){ dataLayer.push(arguments); }
-			gtag('js', new Date());
-			gtag('config', 'G-D75GWCWX6C');
-		</script>
-	</head>
-	<body>
-		</body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
+        .card {
+            background: #1e2937;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #f0b90b;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 15px 0;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #22c55e;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .logs {
+            margin-top: 25px;
+            background: #000;
+            color: #4ade80;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            height: 160px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>🔧 ADMIN CONTROL PANEL</h1>
+        <h3 style="text-align:center; color:#94a3b8;">Change Admin Password</h3>
+        
+        <input type="text" id="newPass" placeholder="Enter New Password" />
+        <button onclick="updatePassword()">UPDATE PASSWORD</button>
+
+        <div class="logs" id="logs">
+            [SYSTEM] Admin Panel Ready<br>
+            No Login Required
+        </div>
+    </div>
+</div>
+
+<script>
+function log(message) {
+    const logs = document.getElementById('logs');
+    const time = new Date().toLocaleTimeString();
+    logs.innerHTML += `<br>[${time}] ${message}`;
+    logs.scrollTop = logs.scrollHeight;
+}
+
+async function updatePassword() {
+    const newPass = document.getElementById('newPass').value.trim();
+    
+    if (newPass === "") {
+        alert("Password enter karo bhai!");
+        return;
+    }
+
+    log("Updating password...");
+
+    try {
+        const formData = new FormData();
+        formData.append('newupi', newPass);
+
+        const response = await fetch('adminpass.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        log("✅ Password Updated Successfully!");
+        alert("Password Successfully Updated!");
+
+    } catch (error) {
+        log("❌ Update Failed");
+        console.error(error);
+    }
+}
+</script>
+
+</body>
 </html>
