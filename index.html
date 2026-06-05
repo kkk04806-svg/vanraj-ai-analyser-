@@ -3,115 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control Panel</title>
+    <title>VANRAJ HYBRID v6.5 - AI PREDICTOR</title>
     <style>
         body {
-            background: #0f172a;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .container {
-            max-width: 500px;
-            margin: auto;
-        }
-        .card {
-            background: #1e2937;
+            width: 100%;
+            max-width: 480px;
+            background: #1e293b;
             border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-sizing: border-box;
         }
-        h1 {
-            color: #f0b90b;
+        h2 {
             text-align: center;
-            margin-bottom: 25px;
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 18px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        input {
-            width: 100%;
+        
+        /* 🎯 NEXT PERIOD SIGNAL PANEL */
+        .live-result-box {
+            background: linear-gradient(135deg, #020617, #1e1b4b);
+            border: 2px solid #10b981;
+            border-radius: 12px;
             padding: 15px;
-            background: #0f172a;
-            border: 1px solid #475569;
-            color: white;
-            border-radius: 8px;
-            font-size: 16px;
-            margin: 15px 0;
+            margin-bottom: 15px;
+            text-align: center;
         }
-        button {
-            width: 100%;
-            padding: 16px;
-            background: #22c55e;
-            color: black;
-            border: none;
-            border-radius: 8px;
-            font-size: 17px;
+        .box-title {
+            color: #10b981;
+            font-size: 12px;
             font-weight: bold;
-            cursor: pointer;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
         }
-        .logs {
-            margin-top: 25px;
-            background: #000;
-            color: #4ade80;
-            padding: 15px;
+        .live-outputs {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .output-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .output-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .server-badge {
+            font-size: 20px;
+            font-weight: 800;
+            padding: 8px 15px;
             border-radius: 8px;
+            min-width: 75px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* UI Colors */
+        .big { background-color: #eab308; color: #000; }
+        .small { background-color: #3b82f6; color: #fff; }
+        .green { background-color: #10b981; color: #fff; }
+        .red { background-color: #ef4444; color: #fff; }
+        .red-violet { background: linear-gradient(135deg, #ef4444, #a855f7); color: #fff; }
+        .green-violet { background: linear-gradient(135deg, #10b981, #a855f7); color: #fff; }
+        .calculating { background-color: #475569; color: #cbd5e1; font-size: 13px; }
+
+        /* Timer Box */
+        .live-panel {
+            background: #334155;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #38bdf8;
+        }
+        .period-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 3px;
+        }
+        .period-value {
+            font-size: 15px;
+            font-weight: bold;
             font-family: monospace;
-            height: 160px;
-            overflow-y: auto;
+            margin: 0;
+        }
+        .countdown-box {
+            text-align: center;
+            background: #0f172a;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+        }
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        /* History */
+        .history-box {
+            background: #1e293b;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .history-title {
+            color: #38bdf8;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+            align-items: center;
+        }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 3px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h1>🔧 ADMIN CONTROL PANEL</h1>
-        <h3 style="text-align:center; color:#94a3b8;">Change Admin Password</h3>
-        
-        <input type="text" id="newPass" placeholder="Enter New Password" />
-        <button onclick="updatePassword()">UPDATE PASSWORD</button>
+    <h2>VANRAJ AI ENGINE v6.5</h2>
+    
+    <div class="live-result-box">
+        <div class="box-title">🔮 UPCOMING PERIOD TARGET SIGNAL</div>
+        <div class="live-outputs">
+            <div class="output-group">
+                <div class="output-label">PREDICTION</div>
+                <span id="predicted-number" class="server-badge calculating">WAIT</span>
+            </div>
+            <div class="output-group">
+                <div class="output-label">COLOR</div>
+                <span id="predicted-color" class="server-badge calculating">WAIT</span>
+            </div>
+            <div class="output-group">
+                <div class="output-label">SIZE</div>
+                <span id="predicted-size" class="server-badge calculating">WAIT</span>
+            </div>
+        </div>
+    </div>
 
-        <div class="logs" id="logs">
-            [SYSTEM] Admin Panel Ready<br>
-            No Login Required
+    <div class="live-panel">
+        <div>
+            <div class="period-title">ACTIVE RUNNING PERIOD</div>
+            <p id="current-issue" class="period-value">Syncing Stream...</p>
+        </div>
+        <div class="countdown-box">
+            <div style="font-size: 9px; color: #fbbf24; font-weight: bold;">TIME LEFT</div>
+            <div id="countdown" class="timer">--</div>
+        </div>
+    </div>
+
+    <div class="history-box">
+        <div class="history-title">📊 Verified Server Data History</div>
+        <div id="history-data">
+            <div style="text-align: center; color: #94a3b8; padding: 10px;">Connecting to API...</div>
         </div>
     </div>
 </div>
 
 <script>
-function log(message) {
-    const logs = document.getElementById('logs');
-    const time = new Date().toLocaleTimeString();
-    logs.innerHTML += `<br>[${time}] ${message}`;
-    logs.scrollTop = logs.scrollHeight;
-}
+    const historyApiUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+    const gameInfoApiUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_30S.json";
 
-async function updatePassword() {
-    const newPass = document.getElementById('newPass').value.trim();
-    
-    if (newPass === "") {
-        alert("Password enter karo bhai!");
-        return;
+    let lastLoggedIssue = "";
+    let forceFetchInterval = null;
+
+    async function fetchServerTimeEngine() {
+        try {
+            const timestamp = Date.now();
+            const infoResponse = await fetch(`${gameInfoApiUrl}?ts=${timestamp}`);
+            
+            if (infoResponse.ok) {
+                const infoJson = await infoResponse.json();
+                if (infoJson && infoJson.data) {
+                    const currentIssue = infoJson.data.currentIssue;
+                    const timeLeft = infoJson.data.timeLeft;
+
+                    const currentIssueEl = document.getElementById('current-issue');
+                    const countdownEl = document.getElementById('countdown');
+
+                    if (currentIssueEl) currentIssueEl.innerText = currentIssue;
+                    if (countdownEl) {
+                        countdownEl.innerText = timeLeft + "s";
+                        countdownEl.style.color = timeLeft <= 5 ? "#ef4444" : "#38bdf8";
+                    }
+                    
+                    if (currentIssue !== lastLoggedIssue || timeLeft === 0) {
+                        lastLoggedIssue = currentIssue;
+                        triggerFastStreamPull();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Timer Sync Error:", error);
+        }
     }
 
-    log("Updating password...");
+    function triggerFastStreamPull() {
+        if (forceFetchInterval) clearInterval(forceFetchInterval);
+        let checks = 0;
+        forceFetchInterval = setInterval(async () => {
+            checks++;
+            const received = await fetchHistoryStream();
+            if (received || checks > 10) clearInterval(forceFetchInterval);
+        }, 500);
+    }
 
-    try {
-        const formData = new FormData();
-        formData.append('newupi', newPass);
+    async function fetchHistoryStream() {
+        try {
+            const timestamp = Date.now();
+            const historyResponse = await fetch(`${historyApiUrl}?ts=${timestamp}`);
+            if (historyResponse.ok) {
+                const historyJson = await historyResponse.json();
+                if (historyJson && historyJson.data && historyJson.data.list) {
+                    const list = historyJson.data.list;
+                    renderHistoryTable(list);
+                    
+                    // 🧠 AI ENGINE CALL: Past trend analytics se next predictions nikalna
+                    calculateNextSignal(list);
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.error("History Stream Error:", error);
+        }
+        return false;
+    }
 
-        const response = await fetch('adminpass.php', {
-            method: 'POST',
-            body: formData
+    // 🧠 VANRAJ PATTERN PILOT ENGINE v6.5 (PREDICTIVE LOGIC)
+    function calculateNextSignal(historyList) {
+        if (!historyList || historyList.length < 3) return;
+
+        // Piche ke teen sets extract karein analytics ke liye
+        let r1 = historyList[0];
+        let r2 = historyList[1];
+        let r3 = historyList[2];
+
+        let n1 = parseInt(r1.number);
+        let n2 = parseInt(r2.number);
+        let n3 = parseInt(r3.number);
+
+        // Advanced Target Calculation Logic
+        let weightSum = (n1 * 3) + (n2 * 2) + n3;
+        let predictedNum = (weightSum + 7) % 10; 
+
+        // Size Automation
+        let predictedSize = (predictedNum >= 5) ? "BIG" : "SMALL";
+
+        // Color Automation Based on Math Outputs
+        let predictedColor = "GREEN";
+        if (predictedNum === 0 || predictedNum === 5) {
+            predictedColor = (predictedNum === 0) ? "RED,VIOLET" : "GREEN,VIOLET";
+        } else if (predictedNum % 2 === 0) {
+            predictedColor = "RED";
+        } else {
+            predictedColor = "GREEN";
+        }
+
+        // DOM Inject to Target Section
+        const numEl = document.getElementById('predicted-number');
+        const sizeEl = document.getElementById('predicted-size');
+        const colorEl = document.getElementById('predicted-color');
+
+        if (numEl) {
+            numEl.innerText = predictedNum;
+            numEl.className = "server-badge";
+            numEl.style.backgroundColor = "#1e293b";
+            numEl.style.border = "2px solid #10b981";
+            numEl.style.color = "#fff";
+        }
+
+        if (sizeEl) {
+            sizeEl.innerText = predictedSize;
+            sizeEl.className = `server-badge ${predictedSize.toLowerCase()}`;
+        }
+
+        if (colorEl) {
+            colorEl.innerText = predictedColor.replace(/-/, ',');
+            let cleanColor = predictedColor.toLowerCase();
+            if (cleanColor.includes('red') && cleanColor.includes('violet')) {
+                colorEl.className = "server-badge red-violet";
+            } else if (cleanColor.includes('green') && cleanColor.includes('violet')) {
+                colorEl.className = "server-badge green-violet";
+            } else {
+                colorEl.className = `server-badge ${cleanColor}`;
+            }
+        }
+    }
+
+    function renderHistoryTable(list) {
+        const container = document.getElementById('history-data');
+        if (!container) return;
+        container.innerHTML = "";
+
+        list.slice(0, 6).forEach(result => {
+            const div = document.createElement('div');
+            div.className = "history-item";
+            
+            let issueNum = result.issue || "---";
+            let numValue = result.number !== undefined ? result.number : "?";
+            let sizeText = result.size || (numValue >= 5 ? "Big" : "Small");
+            let colorText = result.color || "Green";
+            let firstColorClass = colorText.split(',')[0].toLowerCase();
+
+            div.innerHTML = `
+                <span><strong>${issueNum}</strong></span>
+                <div>
+                    <span class="badge ${firstColorClass}">${colorText}</span>
+                    <span class="badge ${sizeText.toLowerCase()}">${sizeText}</span>
+                    <span style="color:#f1f5f9; font-weight:bold; font-family:monospace; margin-left:8px;">[${numValue}]</span>
+                </div>
+            `;
+            container.appendChild(div);
         });
-
-        log("✅ Password Updated Successfully!");
-        alert("Password Successfully Updated!");
-
-    } catch (error) {
-        log("❌ Update Failed");
-        console.error(error);
     }
-}
+
+    fetchServerTimeEngine();
+    fetchHistoryStream();
+    setInterval(fetchServerTimeEngine, 1000);
 </script>
 
 </body>
