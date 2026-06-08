@@ -3,357 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VANRAJ HYBRID v6.5 - AI PREDICTOR</title>
+    <title>VANRAJ AI PATTERN PILOT</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a;
-            color: #ffffff;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            box-sizing: border-box;
-        }
-        h2 {
-            text-align: center;
-            color: #38bdf8;
-            margin-top: 0;
-            font-size: 18px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        
-        /* 🎯 NEXT PERIOD SIGNAL PANEL */
-        .live-result-box {
-            background: linear-gradient(135deg, #020617, #1e1b4b);
-            border: 2px solid #10b981;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .box-title {
-            color: #10b981;
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-        }
-        .live-outputs {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .output-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .output-label {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .server-badge {
-            font-size: 20px;
-            font-weight: 800;
-            padding: 8px 15px;
-            border-radius: 8px;
-            min-width: 75px;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        /* UI Colors */
-        .big { background-color: #eab308; color: #000; }
-        .small { background-color: #3b82f6; color: #fff; }
-        .green { background-color: #10b981; color: #fff; }
-        .red { background-color: #ef4444; color: #fff; }
-        .red-violet { background: linear-gradient(135deg, #ef4444, #a855f7); color: #fff; }
-        .green-violet { background: linear-gradient(135deg, #10b981, #a855f7); color: #fff; }
-        .calculating { background-color: #475569; color: #cbd5e1; font-size: 13px; }
-
-        /* Timer Box */
-        .live-panel {
-            background: #334155;
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid #38bdf8;
-        }
-        .period-title {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-bottom: 3px;
-        }
-        .period-value {
-            font-size: 15px;
-            font-weight: bold;
-            font-family: monospace;
-            margin: 0;
-        }
-        .countdown-box {
-            text-align: center;
-            background: #0f172a;
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid #475569;
-        }
-        .timer {
-            font-size: 24px;
-            font-weight: bold;
-            color: #38bdf8;
-        }
-
-        /* History */
-        .history-box {
-            background: #1e293b;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .history-title {
-            color: #38bdf8;
-            font-size: 14px;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #334155;
-            font-size: 13px;
-            align-items: center;
-        }
-        .badge {
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-left: 3px;
-            display: inline-block;
-        }
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: #151d30; padding: 25px; border-radius: 15px; box-shadow: 0 0 25px rgba(0, 255, 123, 0.2); border: 1px solid #1f2c47; }
+        h1 { color: #00ff7b; letter-spacing: 2px; font-size: 24px; margin-bottom: 5px; }
+        p.subtitle { color: #8a99ad; font-size: 14px; margin-top: 0; margin-bottom: 25px; }
+        .data-box { background: #1f2c47; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 5px solid #00ff7b; text-align: left; }
+        .data-title { font-size: 12px; color: #8a99ad; text-transform: uppercase; }
+        .data-value { font-size: 20px; font-weight: bold; margin-top: 5px; }
+        .prediction-card { background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); padding: 20px; border-radius: 12px; border: 2px dashed #00ff7b; margin-top: 25px; }
+        .predict-title { font-size: 16px; font-weight: bold; color: #8a99ad; }
+        .predict-value { font-size: 32px; font-weight: 900; margin-top: 10px; text-shadow: 0 0 10px rgba(0,255,123,0.5); }
+        .loader { color: #8a99ad; font-style: italic; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>VANRAJ AI ENGINE v6.5</h2>
-    
-    <div class="live-result-box">
-        <div class="box-title">🔮 UPCOMING PERIOD TARGET SIGNAL</div>
-        <div class="live-outputs">
-            <div class="output-group">
-                <div class="output-label">PREDICTION</div>
-                <span id="predicted-number" class="server-badge calculating">WAIT</span>
-            </div>
-            <div class="output-group">
-                <div class="output-label">COLOR</div>
-                <span id="predicted-color" class="server-badge calculating">WAIT</span>
-            </div>
-            <div class="output-group">
-                <div class="output-label">SIZE</div>
-                <span id="predicted-size" class="server-badge calculating">WAIT</span>
-            </div>
+    <div class="container">
+        <h1>VANRAJ AI ANALYSER</h1>
+        <p class="subtitle">PatternPilot Real-time Tracker</p>
+
+        <div class="data-box">
+            <div class="data-title">Last Period Number</div>
+            <div class="data-value" id="last-period">Loading...</div>
+        </div>
+
+        <div class="data-box" style="border-left-color: #ff3b30;">
+            <div class="data-title">Last Result (Number & Size)</div>
+            <div class="data-value" id="last-result">Loading...</div>
+        </div>
+
+        <div class="prediction-card">
+            <div class="predict-title">NEXT PERIOD PREDICTION</div>
+            <div class="data-value" id="next-period" style="color: #00ff7b; font-size: 16px;">--</div>
+            <div class="predict-value" id="prediction">WAITING...</div>
         </div>
     </div>
 
-    <div class="live-panel">
-        <div>
-            <div class="period-title">ACTIVE RUNNING PERIOD</div>
-            <p id="current-issue" class="period-value">Syncing Stream...</p>
-        </div>
-        <div class="countdown-box">
-            <div style="font-size: 9px; color: #fbbf24; font-weight: bold;">TIME LEFT</div>
-            <div id="countdown" class="timer">--</div>
-        </div>
-    </div>
+    <script>
+        // TODO: Apne Firebase Console se Config Details yahan paste karein
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-    <div class="history-box">
-        <div class="history-title">📊 Verified Server Data History</div>
-        <div id="history-data">
-            <div style="text-align: center; color: #94a3b8; padding: 10px;">Connecting to API...</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const historyApiUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-    const gameInfoApiUrl = "https://draw.ar-lottery01.com/WinGo/WinGo_30S.json";
-
-    let lastLoggedIssue = "";
-    let forceFetchInterval = null;
-
-    async function fetchServerTimeEngine() {
-        try {
-            const timestamp = Date.now();
-            const infoResponse = await fetch(`${gameInfoApiUrl}?ts=${timestamp}`);
-            
-            if (infoResponse.ok) {
-                const infoJson = await infoResponse.json();
-                if (infoJson && infoJson.data) {
-                    const currentIssue = infoJson.data.currentIssue;
-                    const timeLeft = infoJson.data.timeLeft;
-
-                    const currentIssueEl = document.getElementById('current-issue');
-                    const countdownEl = document.getElementById('countdown');
-
-                    if (currentIssueEl) currentIssueEl.innerText = currentIssue;
-                    if (countdownEl) {
-                        countdownEl.innerText = timeLeft + "s";
-                        countdownEl.style.color = timeLeft <= 5 ? "#ef4444" : "#38bdf8";
-                    }
-                    
-                    if (currentIssue !== lastLoggedIssue || timeLeft === 0) {
-                        lastLoggedIssue = currentIssue;
-                        triggerFastStreamPull();
-                    }
+        // Live Real-time Database Listener
+        database.ref('game_updates').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                document.getElementById('last-period').innerText = data.last_period;
+                document.getElementById('last-result').innerText = data.last_number + " (" + data.last_size + ")";
+                document.getElementById('next-period').innerText = "Period: " + data.next_period;
+                
+                // Set Prediction Text and Style
+                const predElement = document.getElementById('prediction');
+                predElement.innerText = data.prediction;
+                if(data.prediction.includes("BIG")) {
+                    predElement.style.color = "#00ff7b";
+                } else {
+                    predElement.style.color = "#ff3b30";
                 }
             }
-        } catch (error) {
-            console.error("Timer Sync Error:", error);
-        }
-    }
-
-    function triggerFastStreamPull() {
-        if (forceFetchInterval) clearInterval(forceFetchInterval);
-        let checks = 0;
-        forceFetchInterval = setInterval(async () => {
-            checks++;
-            const received = await fetchHistoryStream();
-            if (received || checks > 10) clearInterval(forceFetchInterval);
-        }, 500);
-    }
-
-    async function fetchHistoryStream() {
-        try {
-            const timestamp = Date.now();
-            const historyResponse = await fetch(`${historyApiUrl}?ts=${timestamp}`);
-            if (historyResponse.ok) {
-                const historyJson = await historyResponse.json();
-                if (historyJson && historyJson.data && historyJson.data.list) {
-                    const list = historyJson.data.list;
-                    renderHistoryTable(list);
-                    
-                    // 🧠 AI ENGINE CALL: Past trend analytics se next predictions nikalna
-                    calculateNextSignal(list);
-                    return true;
-                }
-            }
-        } catch (error) {
-            console.error("History Stream Error:", error);
-        }
-        return false;
-    }
-
-    // 🧠 VANRAJ PATTERN PILOT ENGINE v6.5 (PREDICTIVE LOGIC)
-    function calculateNextSignal(historyList) {
-        if (!historyList || historyList.length < 3) return;
-
-        // Piche ke teen sets extract karein analytics ke liye
-        let r1 = historyList[0];
-        let r2 = historyList[1];
-        let r3 = historyList[2];
-
-        let n1 = parseInt(r1.number);
-        let n2 = parseInt(r2.number);
-        let n3 = parseInt(r3.number);
-
-        // Advanced Target Calculation Logic
-        let weightSum = (n1 * 3) + (n2 * 2) + n3;
-        let predictedNum = (weightSum + 7) % 10; 
-
-        // Size Automation
-        let predictedSize = (predictedNum >= 5) ? "BIG" : "SMALL";
-
-        // Color Automation Based on Math Outputs
-        let predictedColor = "GREEN";
-        if (predictedNum === 0 || predictedNum === 5) {
-            predictedColor = (predictedNum === 0) ? "RED,VIOLET" : "GREEN,VIOLET";
-        } else if (predictedNum % 2 === 0) {
-            predictedColor = "RED";
-        } else {
-            predictedColor = "GREEN";
-        }
-
-        // DOM Inject to Target Section
-        const numEl = document.getElementById('predicted-number');
-        const sizeEl = document.getElementById('predicted-size');
-        const colorEl = document.getElementById('predicted-color');
-
-        if (numEl) {
-            numEl.innerText = predictedNum;
-            numEl.className = "server-badge";
-            numEl.style.backgroundColor = "#1e293b";
-            numEl.style.border = "2px solid #10b981";
-            numEl.style.color = "#fff";
-        }
-
-        if (sizeEl) {
-            sizeEl.innerText = predictedSize;
-            sizeEl.className = `server-badge ${predictedSize.toLowerCase()}`;
-        }
-
-        if (colorEl) {
-            colorEl.innerText = predictedColor.replace(/-/, ',');
-            let cleanColor = predictedColor.toLowerCase();
-            if (cleanColor.includes('red') && cleanColor.includes('violet')) {
-                colorEl.className = "server-badge red-violet";
-            } else if (cleanColor.includes('green') && cleanColor.includes('violet')) {
-                colorEl.className = "server-badge green-violet";
-            } else {
-                colorEl.className = `server-badge ${cleanColor}`;
-            }
-        }
-    }
-
-    function renderHistoryTable(list) {
-        const container = document.getElementById('history-data');
-        if (!container) return;
-        container.innerHTML = "";
-
-        list.slice(0, 6).forEach(result => {
-            const div = document.createElement('div');
-            div.className = "history-item";
-            
-            let issueNum = result.issue || "---";
-            let numValue = result.number !== undefined ? result.number : "?";
-            let sizeText = result.size || (numValue >= 5 ? "Big" : "Small");
-            let colorText = result.color || "Green";
-            let firstColorClass = colorText.split(',')[0].toLowerCase();
-
-            div.innerHTML = `
-                <span><strong>${issueNum}</strong></span>
-                <div>
-                    <span class="badge ${firstColorClass}">${colorText}</span>
-                    <span class="badge ${sizeText.toLowerCase()}">${sizeText}</span>
-                    <span style="color:#f1f5f9; font-weight:bold; font-family:monospace; margin-left:8px;">[${numValue}]</span>
-                </div>
-            `;
-            container.appendChild(div);
         });
-    }
-
-    fetchServerTimeEngine();
-    fetchHistoryStream();
-    setInterval(fetchServerTimeEngine, 1000);
-</script>
-
+    </script>
 </body>
 </html>
